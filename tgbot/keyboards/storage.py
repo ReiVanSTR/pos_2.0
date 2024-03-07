@@ -7,6 +7,7 @@ from typing import List, Optional
 
 from tgbot import keyboards
 from ..models import Tabacco, TabaccoData
+from .pager import BasicPageGenerator
  
 menu = ["Add", "Invent", "Show"]
 
@@ -79,6 +80,15 @@ async def storage_brand(type: str) -> InlineKeyboardMarkup:
     keyboard.adjust(1,3,3,1)
     return keyboard.as_markup()
 
+def storage_cancel():
+    keyboard = InlineKeyboardBuilder()
+
+    keyboard.button(
+        text = "Cancel",
+        callback_data = StorageNavigate(button_name = "main", type = "main")
+    )
+
+    return keyboard.as_markup()
 
 def storage_commit():
     keyboard = InlineKeyboardBuilder()
@@ -95,25 +105,27 @@ def storage_commit():
     keyboard.adjust(1,1)
     return keyboard.as_markup()
 
-class BasicPageGenerator():
-    _router: Router
 
-    @classmethod
-    def connect_router(cls, router: Router):
-        cls._router = router
+# class BasicPageGenerator():
+#     _router: Router
+
+#     @classmethod
+#     def connect_router(cls, router: Router):
+#         cls._router = router
     
-    @classmethod
-    def register_handler(cls, handler, filters):
-        cls._router.callback_query.register(handler, *filters)
+#     @classmethod
+#     def register_handler(cls, handler, filters):
+#         cls._router.callback_query.register(handler, *filters)
 
 
 class ShowPageGenerator(BasicPageGenerator):
     def __init__(self, data: List[TabaccoData] = []) -> None:
         self.data = data
-        self.buttons_per_page = 4
+        self.buttons_per_page = 6
         self.number_of_pages = -(-len(self.data) // self.buttons_per_page) #math.ceil
 
     def update(self, data):
+        logging.log(30, "updated")
         self.data = data
         self.number_of_pages = -(-len(self.data) // self.buttons_per_page) #math.ceil
         
@@ -133,67 +145,30 @@ class ShowPageGenerator(BasicPageGenerator):
 
         keyboard.adjust(1, repeat = True)
 
+
+        navigate_keyboards = self.page_bottom_slider(
+            first = NavigatePageKeyboard(action = "first", current_page = current_page),
+            prev = NavigatePageKeyboard(action = "prev", current_page = current_page),
+            next = NavigatePageKeyboard(action = "next", current_page = current_page),
+            last = NavigatePageKeyboard(action = "last", current_page = current_page),
+            static_callback = NavigatePageKeyboard(action = "static", current_page = current_page),
+            static_text = f" {current_page}/{self.number_of_pages} "
+        )
+
+
+
         navigate_buttons = InlineKeyboardBuilder()
 
         if self.number_of_pages > 1:
             if current_page == 1:
-                navigate_buttons.button(
-                    text = f" {current_page}/{self.number_of_pages} ",
-                    callback_data = NavigatePageKeyboard(action = "static", current_page = current_page)
-                )
-                navigate_buttons.button(
-                    text = ">",
-                    callback_data = NavigatePageKeyboard(action = "next", current_page = current_page)
-                )
-                navigate_buttons.button(
-                    text = ">>",
-                    callback_data = NavigatePageKeyboard(action = "last", current_page = current_page)
-                )
-                navigate_buttons.adjust(3,1)
+                navigate_buttons.attach(navigate_keyboards["first_page"])
             elif current_page == self.number_of_pages and self.number_of_pages > 1:
-                navigate_buttons.button(
-                    text = "<<",
-                    callback_data = NavigatePageKeyboard(action = "first", current_page = current_page)
-                )
-
-                navigate_buttons.button(
-                    text = "<",
-                    callback_data = NavigatePageKeyboard(action = "prev", current_page = current_page)
-                )
-                navigate_buttons.button(
-                    text = f" {current_page}/{self.number_of_pages} ",
-                    callback_data = NavigatePageKeyboard(action = "static", current_page = current_page)
-                )
-                navigate_buttons.adjust(3,1)
-
+                navigate_buttons.attach(navigate_keyboards["last_page"])
             else:
-                navigate_buttons.button(
-                    text = "<<",
-                    callback_data = NavigatePageKeyboard(action = "first", current_page = current_page)
-                )
-                navigate_buttons.button(
-                    text = "<",
-                    callback_data = NavigatePageKeyboard(action = "prev", current_page = current_page)
-                )
-                navigate_buttons.button(
-                    text = f" {current_page}/{self.number_of_pages} ",
-                    callback_data = NavigatePageKeyboard(action = "static", current_page = current_page)
-                )
-                navigate_buttons.button(
-                    text = ">",
-                    callback_data = NavigatePageKeyboard(action = "next", current_page = current_page)
-                )
-                navigate_buttons.button(
-                    text = ">>",
-                    callback_data = NavigatePageKeyboard(action = "last", current_page = current_page)
-                )
-                navigate_buttons.adjust(5,1)
+                navigate_buttons.attach(navigate_keyboards["default_page"])
+            navigate_buttons.adjust(5,1)
         else:
-            navigate_buttons.button(
-                    text = f" {current_page}/{self.number_of_pages} ",
-                    callback_data = NavigatePageKeyboard(action = "static", current_page = current_page)
-                )
-            navigate_buttons.adjust(1,1)
+            navigate_buttons.attach(navigate_keyboards["empty_page"])
 
         keyboard.attach(navigate_buttons)
 
@@ -225,5 +200,5 @@ class ShowPageGenerator(BasicPageGenerator):
 
         
 
-async def storage_show():
+def storage_inventarize():
     pass

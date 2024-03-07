@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery
 
-from tgbot.keyboards.storage import storage_menu, storage_brand_types, storage_brand, storage_commit, StorageNavigate, Insert, ShowPageGenerator, NavigatePageKeyboard
+from tgbot.keyboards.storage import storage_menu, storage_brand_types, storage_brand, storage_cancel, storage_commit, StorageNavigate, Insert, ShowPageGenerator, NavigatePageKeyboard
 
 from ..models import Tabacco
 
@@ -60,14 +60,13 @@ async def storage_chooise_type(query: CallbackQuery, callback_data: Insert, stat
 async def storage_chooise_brand_name(query: CallbackQuery, state: FSMContext):
     await query.answer()
 
-    await query.message.edit_text("Write name for new tabacco brand", reply_markup = None)
-
+    await query.message.edit_text("Write name for new tabacco brand", reply_markup = storage_cancel())
     await state.set_state(Form.brand_new_name)
 
 @storage_router.message(Form.brand_new_name, F.text.is_not(None))
 async def storage_choose_new_brand_name(message: Message, state: FSMContext):
     await state.update_data(data = {"brand_name":message.text}) 
-    await message.answer("Write name for " + message.text, reply_markup = None)
+    await message.answer("Write name for " + message.text, reply_markup = storage_cancel())
 
     await state.set_state(Form.tabacco_name)
 
@@ -75,7 +74,7 @@ async def storage_choose_new_brand_name(message: Message, state: FSMContext):
 async def storage_chooise_name(query: CallbackQuery, callback_data: Insert, state: FSMContext):
     await query.answer()
     await state.update_data(data = {"brand_name":callback_data.brand_name})    
-    await query.message.edit_text("Write name for "+ callback_data.brand_name, reply_markup = None)
+    await query.message.edit_text("Write name for "+ callback_data.brand_name, reply_markup = storage_cancel())
 
     await state.set_state(Form.tabacco_name)
 
@@ -117,16 +116,31 @@ async def storage_commit_form(query: CallbackQuery, callback_data: Insert, state
 
 #show
 
-page_generator = ShowPageGenerator()
-page_generator.connect_router(storage_router)
-page_generator.register_handler(page_generator.navigate_callbacks, [NavigateStorage.menu, NavigatePageKeyboard.filter(F.action.in_(["first", "last", "prev","next"]))])
+show_page_generator = ShowPageGenerator()
+show_page_generator.connect_router(storage_router)
+show_page_generator.register_handler(show_page_generator.navigate_callbacks, [NavigateStorage.menu, NavigatePageKeyboard.filter(F.action.in_(["first", "last", "prev","next"]))])
 
 @storage_router.callback_query(StorageNavigate.filter(F.button_name == "show"))
 async def storage_show(query: CallbackQuery, state: FSMContext):
     await query.answer()
 
-    page_generator.update(await Tabacco.get_all())
+    show_page_generator.update(await Tabacco.get_all())
 
-    markup = page_generator.show_page_keyboard()
+    markup = show_page_generator.show_page_keyboard()
+
+    await query.message.edit_text("Storage:", reply_markup = markup)
+
+
+#inventarization
+    
+# invent_page_generator =
+
+@storage_router.callback_query(StorageNavigate.filter(F.button_name == "invent"))
+async def storage_show(query: CallbackQuery, state: FSMContext):
+    await query.answer()
+
+    show_page_generator.update(await Tabacco.get_all())
+
+    markup = show_page_generator.show_page_keyboard()
 
     await query.message.edit_text("Storage:", reply_markup = markup)
