@@ -1,0 +1,1 @@
+from .tabacco import Tabacco, TabaccoData

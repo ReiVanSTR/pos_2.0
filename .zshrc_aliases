@@ -1,0 +1,12 @@
+alias cls="clear"
+alias run_dev="
+tmux new -s dev -d
+tmux split-window -h -t dev:1.1
+tmux split-window -v -t dev:1.2
+tmux split-window -v -t dev:1.1
+tmux send-keys -t dev:1.3 'redis-server --loadmodule RedisJSON/bin/linux-x64-release/rejson.so'	Enter
+tmux send-keys -t dev:1.2 'cd /mnt/e/Shisha/BOT/orderbot && . ./env/bin/activate && cls' Enter
+tmux send-keys -t dev:1.4 'cd /mnt/e/Shisha/BOT/notebook && . ./env/bin/activate && jupyter notebook --port=8889 --no-browser' Enter
+
+tmux attach -t dev
+"
