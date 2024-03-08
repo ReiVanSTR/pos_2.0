@@ -1,4 +1,5 @@
 from pydantic import Field
+from typing import Union
 from dataclasses import dataclass
 from .basic import Basic, ObjectId
 
@@ -10,6 +11,15 @@ class TabaccoData():
     type: str
     weight: float
 
+    def to_dict(self):
+        return {
+            "_id":self._id.__str__(), 
+            "label":self.label,
+            "brand":self.brand,
+            "type":self.type,
+            "weight":self.weight
+        }
+
 class Tabacco(Basic):
     # id: int = Field(default_factory = int, alias = "_id")
     id: ObjectId = Field(default_factory = ObjectId, alias = "_id")
@@ -17,6 +27,13 @@ class Tabacco(Basic):
     brand: str
     type: str
     weight: float = Field(default = 0)
+
+    @classmethod
+    async def get_by_id(cls, id: Union[ObjectId, str]):
+        if isinstance(id, str):
+            id = ObjectId(id)
+        obj = await cls._collection.find_one({'_id': id})
+        return TabaccoData(**obj) if obj else None
     
     @classmethod
     async def get_by_label(cls, label: str):

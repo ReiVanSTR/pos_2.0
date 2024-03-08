@@ -1,6 +1,8 @@
+from typing import Union
 from motor.motor_tornado import MotorCollection
 from pydantic import BaseModel
 from loader import db
+import binascii
 
 from bson.objectid import ObjectId as BsonObjectId
 
@@ -16,6 +18,9 @@ class ObjectId(BsonObjectId):
         if not isinstance(v, BsonObjectId):
             raise TypeError('ObjectId required')
         return str(v)
+    
+    def __str__(self) -> str:
+        return binascii.hexlify(self.__id).decode()
 
 
 class Basic(BaseModel):
@@ -31,7 +36,9 @@ class Basic(BaseModel):
         return num
 
     @classmethod
-    async def get(cls, id: int):
+    async def get(cls, id: Union[ObjectId, str]):
+        if isinstance(id, str):
+            id = ObjectId(id)
         obj = await cls._collection.find_one({'_id': id})
         return cls(**obj) if obj else None
 
