@@ -1,6 +1,6 @@
 from datetime import datetime
 from dataclasses import dataclass
-from basic import Basic, ObjectId 
+from .basic import Basic, ObjectId 
 from pydantic import Field
 from bson import Timestamp
 from typing import List, Union
@@ -38,10 +38,10 @@ class Invent(Basic):
         return inserted_document.inserted_id
     
     @classmethod
-    async def update(cls, tabacco_id, changes: Changes):
+    async def update_changes(cls, tabacco_id, changes: Changes):
         if not await cls.is_exists(tabacco_id):
             await cls.create(tabacco_id)
-            
+
         pipeline = [
             {"$match":{"tabacco_id":tabacco_id}},
             {"$project":{"changes_size":{"$size":"$changes"}}}
@@ -51,3 +51,5 @@ class Invent(Basic):
             changes._id = result["changes_size"]
 
         await cls._collection.update_one({"tabacco_id":tabacco_id}, {"$push":{"changes":changes.__dict__}}, upsert = True)
+
+Invent.set_collection('inventarization')

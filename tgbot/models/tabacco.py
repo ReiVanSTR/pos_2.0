@@ -64,5 +64,12 @@ class Tabacco(Basic):
         documents = cls._collection.find({"brand":brand})
         return [TabaccoData(**document) async for document in documents]
     
+    @classmethod
+    async def update_weight(cls, id: Union[ObjectId, str], new_weight):
+        if isinstance(id, str):
+            id = ObjectId(id)
+        
+        await cls._collection.update_one({"_id":id}, {"$set":{"weight":new_weight}})
+    
 
 Tabacco.set_collection('tabacco')

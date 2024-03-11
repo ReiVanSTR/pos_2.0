@@ -4,11 +4,15 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from tgbot.keyboards.storage import storage_menu, storage_brand_types, storage_brand, storage_cancel, storage_commit,\
-    StorageNavigate, Insert, ShowPageGenerator, NavigatePageKeyboard, InventPageGenerator,\
+    StorageNavigate, Insert, StorageCommit, ShowPageGenerator, NavigatePageKeyboard, InventPageGenerator,\
     storage_invent_menu, NumKeyboardCallback
 
-from ..models import Tabacco
+from ..models import Tabacco, Invent, Changes
 from ..misc.states import NavigateStorage, Form, InventForm
+
+from typing import Union
+
+from datetime import datetime
 
 storage_router = Router()
 
@@ -86,13 +90,13 @@ async def storage_new_name(message: Message, state: FSMContext):
 
     All is ok?
     """
-    markup = storage_commit()
+    markup = storage_commit(StorageCommit)
 
     await message.answer(text = msg, reply_markup = markup)
     await state.set_state(Form.commit)
 
-@storage_router.callback_query(Form.commit, Insert.filter(F.commit))
-async def storage_commit_form(query: CallbackQuery, callback_data: Insert, state: FSMContext):
+@storage_router.callback_query(Form.commit, StorageCommit.filter(F.commit))
+async def storage_commit_form(query: CallbackQuery, callback_data: StorageCommit, state: FSMContext):
     await state.set_state(Form.brand_type)
     data = await state.get_data()
     markup = storage_brand_types()
@@ -158,9 +162,49 @@ async def storage_start_invent(query: CallbackQuery, callback_data: NavigatePage
     await query.answer()
 
     await state.set_state(InventForm.input_weight)
-    await state.set_data({"current_num":0})
 
-    markup = invent_page_generator.show_num_keyboard(0)
+    markup = invent_page_generator.show_num_keyboard()
 
     document = await Tabacco.get_by_id(callback_data.tabacco_id)
-    await query.message.edit_text(document.to_dict().__str__(), reply_markup = markup)
+
+    await state.set_data({"item":document, "current_num": 0})
+
+    await query.message.edit_text(f"{document.brand} - {document.label} - Expected weight: {document.weight}", reply_markup = markup)
+
+@storage_router.callback_query(InventForm.confirm, NumKeyboardCallback.filter(F.action == "commit"))
+async def storage_confirm_invent(query: CallbackQuery, state: FSMContext):
+    await query.answer()
+
+    state_data = await state.get_data()
+    item = state_data["item"]
+
+    text = f"{item.brand} - {item.label} \n Expected weight: {item.weight} \n Accepted weight: {state_data['current_num']}"
+
+    markup = storage_commit(StorageCommit)
+    
+    await query.message.edit_text(text, reply_markup = markup)
+
+
+@storage_router.callback_query(InventForm.confirm, StorageCommit.filter())
+async def storage_commit_invent(query: CallbackQuery, callback_data: StorageNavigate, state: FSMContext):
+    await query.answer()
+
+    state_data = await state.get_data()
+    item = state_data["item"]
+
+    changes = Changes(_id = 0, timestamp = datetime.now(), user_id = query.from_user.id, expected_weight = item.weight, accepted_weight = state_data['current_num'])
+    
+    await state.set_state(NavigateStorage.invent)
+
+    if callback_data.commit == "yes":
+        try:
+            await Invent.update_changes(item._id, changes)
+            await Tabacco.update_weight(item._id, changes.accepted_weight)
+
+        except:
+            await query.message.edit_text("Operation canceled!")
+
+    invent_page_generator.update(await Tabacco.get_all())
+    markup = invent_page_generator.show_page_keyboard()
+
+    await query.message.edit_text("Single invent:", reply_markup = markup)      

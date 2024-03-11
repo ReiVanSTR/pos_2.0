@@ -84,6 +84,9 @@ class BasicPageGenerator():
 
         keyboard.adjust(7,7)
 
+        commit_button = InlineKeyboardBuilder().button(text = "Commit", callback_data = callback(action = "commit"))
+
+        keyboard.attach(commit_button)
         return keyboard.as_markup()
     
     @classmethod

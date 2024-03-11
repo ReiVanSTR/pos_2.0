@@ -10,6 +10,7 @@ from bson import ObjectId
 
 from ..models import Tabacco, TabaccoData
 from .pager import BasicPageGenerator
+from ..misc.states import InventForm
  
 menu = ["Add", "Invent", "Show"]
 
@@ -30,6 +31,9 @@ class NavigatePageKeyboard(CallbackData, prefix = "page_callback"):
     action: str #first, prev, next, last, static
     current_page: int
     tabacco_id: Optional[str] = ""
+
+class StorageCommit(CallbackData, prefix = "storage_commit"):
+    commit: str #yes, nope
 
 def storage_menu():
     keyboard = InlineKeyboardBuilder()
@@ -93,17 +97,17 @@ def storage_cancel():
 
     return keyboard.as_markup()
 
-def storage_commit():
+def storage_commit(callback):
     keyboard = InlineKeyboardBuilder()
 
     keyboard.button(
         text = "Yes",
-        callback_data = Insert(commit = "yes")
+        callback_data = callback(commit = "yes")
     )
 
     keyboard.button(
         text = "Nope",
-        callback_data = Insert(commit = "no")
+        callback_data = callback(commit = "no")
     )
     keyboard.adjust(1,1)
     return keyboard.as_markup()
@@ -207,6 +211,8 @@ def storage_invent_menu():
 
     return keyboard.as_markup()
 
+
+
 class NumKeyboardCallback(CallbackData, prefix = "num_keyboard"):
     action: str
 
@@ -294,11 +300,16 @@ class InventPageGenerator(BasicPageGenerator):
         await query.answer()
 
         state_data = await state.get_data()
+
         if callback_data.action == "clear":
             await state.update_data({"current_num":0})
             markup = self.page_num_keyboard(current_num=0, callback = NumKeyboardCallback)
         elif callback_data.action == "static":
             return
+        elif callback_data.action == "commit":
+            await state.set_state(InventForm.confirm)
+            return 
+            # await state.set_data({"current_num":state_data["current_num"]})
         else:
             operand = float(callback_data.action) if callback_data.action.find(".") else int(callback_data.action)
             current_num = state_data["current_num"]
@@ -312,5 +323,5 @@ class InventPageGenerator(BasicPageGenerator):
 
         await query.message.edit_text("Input invent weight", reply_markup = markup)
 
-    def show_num_keyboard(self, current_num):
+    def show_num_keyboard(self, current_num = 0):
         return self.page_num_keyboard(callback = NumKeyboardCallback, current_num = current_num)
