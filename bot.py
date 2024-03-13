@@ -6,6 +6,13 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 
+from aiogram.client.session.aiohttp import AiohttpSession
+
+session = AiohttpSession(proxy={
+       'http': 'proxy.server:3128',
+       'https': 'proxy.server:3128',
+ })
+
 from tgbot.config import load_config, Config
 from tgbot.handlers import routers_list
 from tgbot.middlewares.config import ConfigMiddleware
@@ -86,7 +93,7 @@ async def main():
     config = load_config(".env")
     storage = get_storage(config)
 
-    bot = Bot(token=config.tg_bot.token, parse_mode="HTML")
+    bot = Bot(token=config.tg_bot.token, parse_mode="HTML", session=session)
     dp = Dispatcher(storage=storage)
 
     dp.include_routers(*routers_list)
