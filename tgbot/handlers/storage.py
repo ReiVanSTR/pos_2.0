@@ -116,7 +116,7 @@ async def storage_commit_form(query: CallbackQuery, callback_data: StorageCommit
 
 show_page_generator = ShowPageGenerator()
 show_page_generator.connect_router(storage_router)
-show_page_generator.register_handler(show_page_generator.navigate_callbacks, [NavigateStorage.show, NavigatePageKeyboard.filter(F.action.in_(["first", "last", "prev","next"]))])
+show_page_generator.register_handler(show_page_generator.navigate_callbacks, [NavigateStorage.show, NavigatePageKeyboard.filter()])
 
 @storage_router.callback_query(StorageNavigate.filter(F.button_name == "show"))
 async def storage_show(query: CallbackQuery, state: FSMContext):

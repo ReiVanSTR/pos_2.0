@@ -1,5 +1,7 @@
 from datetime import datetime
 from dataclasses import dataclass
+
+from tgbot.models.tabacco import TabaccoData
 from .basic import Basic, ObjectId 
 from pydantic import Field
 from bson import Timestamp
@@ -12,6 +14,12 @@ class Changes():
     user_id: int
     expected_weight: int
     accepted_weight: int
+
+@dataclass
+class InventData():
+    _id: ObjectId
+    tabacco_id: ObjectId
+    changes: List[Changes]
 
 class Invent(Basic):
     id: ObjectId = Field(default_factory = ObjectId, alias = "_id")
@@ -51,5 +59,15 @@ class Invent(Basic):
             changes._id = result["changes_size"]
 
         await cls._collection.update_one({"tabacco_id":tabacco_id}, {"$push":{"changes":changes.__dict__}}, upsert = True)
+
+    @classmethod
+    async def get_changes(cls, tabacco_id: str):
+        document = await cls._collection.find_one({"tabacco_id":ObjectId(tabacco_id)})
+        if document:
+            document['changes'] = [Changes(**change_data) for change_data in document['changes']]
+
+            return InventData(**document)
+        else:
+            return None
 
 Invent.set_collection('inventarization')

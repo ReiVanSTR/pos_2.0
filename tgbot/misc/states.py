@@ -17,3 +17,12 @@ class Form(StatesGroup):
 class InventForm(StatesGroup):
     input_weight = State()
     confirm = State()
+
+
+class NavigateOrders(StatesGroup):
+    menu = State()
+    new_order = State()
+
+class FormNewOrder(StatesGroup):
+    input_name = State()
+    confirm = State()

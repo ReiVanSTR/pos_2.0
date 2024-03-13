@@ -8,7 +8,7 @@ from typing import List, Optional, Dict
 
 from bson import ObjectId
 
-from ..models import Tabacco, TabaccoData
+from ..models import Tabacco, TabaccoData, Invent, InventData
 from .pager import BasicPageGenerator
 from ..misc.states import InventForm
  
@@ -136,7 +136,7 @@ class ShowPageGenerator(BasicPageGenerator):
         for raw in buttons:
             keyboard.button(
                 text = f"{raw.type} | {raw.brand} - {raw.label} - {raw.weight}g",
-                callback_data = NavigatePageKeyboard(action = "static", current_page = current_page)
+                callback_data = NavigatePageKeyboard(action = "show_tabacco", current_page = current_page, tabacco_id=raw._id.__str__())
             )
 
         keyboard.adjust(1, repeat = True)
@@ -175,8 +175,36 @@ class ShowPageGenerator(BasicPageGenerator):
 
         return keyboard.as_markup()
     
+    async def tabacco_history_keyboard(self, tabacco_id: str, current_page):
+        keyboard = InlineKeyboardBuilder()
+        data = await Invent.get_changes(tabacco_id)
+
+        if not data:
+            keyboard.button(text = "Not inventarization yet.", callback_data = NavigatePageKeyboard(action = "static", current_page = current_page))
+            keyboard.button(text = "<<", callback_data = NavigatePageKeyboard(action = "redraw", current_page = current_page))
+            keyboard.adjust(1, repeat = True)
+            return keyboard.as_markup()
+        else:
+            for change in data.changes:
+                keyboard.button(
+                    text = f"Id - {change._id}| Inspector: {change.user_id} ({change.expected_weight} -> {change.accepted_weight})", 
+                    callback_data = NavigatePageKeyboard(action = "static", current_page = current_page)
+                )
+            
+            keyboard.adjust(1, repeat = True)
+
+            keyboard.attach(InlineKeyboardBuilder().button(text = "<<", callback_data = NavigatePageKeyboard(action = "redraw", current_page = current_page)))
+
+            return keyboard.as_markup()
+    
     async def navigate_callbacks(self, query: CallbackQuery, callback_data = NavigatePageKeyboard):
         await query.answer()
+
+        if callback_data.action == "static":
+            return
+
+        if callback_data.action == "redraw":
+            current_page = callback_data.current_page
 
         if callback_data.action == "first":
             current_page = 1
@@ -190,9 +218,14 @@ class ShowPageGenerator(BasicPageGenerator):
         if callback_data.action == "next":
             current_page = callback_data.current_page + 1
         
-        markup = self.show_page_keyboard(current_page = current_page)
+        if callback_data.action == "show_tabacco":
+            markup = await self.tabacco_history_keyboard(tabacco_id = callback_data.tabacco_id, current_page = callback_data.current_page)
 
-        await query.message.edit_text(text = "Storage", reply_markup = markup)
+            await query.message.edit_text(text = "Inventarization scope", reply_markup = markup)
+        else:
+            markup = self.show_page_keyboard(current_page = current_page)
+
+            await query.message.edit_text(text = "Storage", reply_markup = markup)
 
         
 
