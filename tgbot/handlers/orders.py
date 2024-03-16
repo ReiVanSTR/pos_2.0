@@ -98,7 +98,6 @@ async def orders_close_bill(query: CallbackQuery, state: FSMContext, callback_da
 
     for order in bill.orders:
         result = await Order.get_order(order)
-        logging.log(30, result)
         for data in result.cart:
             id, weight = list(data.items())[0]
             tabacco = await Tabacco.get_by_id(id)
@@ -109,7 +108,7 @@ async def orders_close_bill(query: CallbackQuery, state: FSMContext, callback_da
 
     markup = bill_keyboards.bills_list()
 
-    await query.message.answer(f"Bill {bill.bill_name} was closed!")
+    logging.log(30, f"Closed bill {bill.bill_name}. Crerated by {bill.created_by}. Closed by {query.from_user.id}")
     await query.message.edit_text("Bill", reply_markup = markup)
 
 

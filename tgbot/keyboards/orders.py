@@ -89,10 +89,10 @@ class BillKeyboards(BasicPageGenerator):
         if bill.orders:
             for order in bill.orders:
                 result = await Order.get_order(order_id = order)
-                keyboard.button(text = f"{result.order_name} | {result.cost}",
+                keyboard.button(text = f"{result.order_name} | {result.cost} pln",
                         callback_data = OrderNavigateCallback(action = "static", bill_id = bill._id.__str__()))
         else:
-            keyboard.button(text = "(Nothing)",
+            keyboard.button(text = "(No orders)",
                         callback_data = OrderNavigateCallback(action = "static", bill_id = bill._id.__str__()))
 
         keyboard.button(text = "Add",

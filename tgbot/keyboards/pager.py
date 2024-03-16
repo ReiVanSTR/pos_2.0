@@ -136,10 +136,8 @@ class BasicPageGenerator():
     @classmethod
     def page_num_keyboard(cls, callback, current_num):
         if not cls._cache.get("num_keyboard_buttons"):
-            logging.log(30, "Not from cache")
             cls.page_num_buttons(callback, current_num)
         
-        logging.log(30, "From cache")
         cached_buttons = cls._cache.get("num_keyboard_buttons")
         new_current_num_button = InlineKeyboardBuilder().button(text = f" {str(current_num)} ", callback_data = callback(action = "static")).export()[0][0]
         cached_buttons[0][3] = new_current_num_button
