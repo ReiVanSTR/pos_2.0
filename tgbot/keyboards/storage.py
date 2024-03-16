@@ -30,7 +30,7 @@ class Insert(CallbackData, prefix = "insert"):
 class NavigatePageKeyboard(CallbackData, prefix = "page_callback"):
     action: str #first, prev, next, last, static
     current_page: int
-    tabacco_id: Optional[str] = ""
+    kwargs: Optional[str] = ""
 
 class StorageCommit(CallbackData, prefix = "storage_commit"):
     commit: str #yes, nope
@@ -115,58 +115,34 @@ def storage_commit(callback):
 
 
 class ShowPageGenerator(BasicPageGenerator):
-    def __init__(self, data: List[TabaccoData] = []) -> None:
-        self.data = data
-        self.buttons_per_page = 6
-        self.number_of_pages = -(-len(self.data) // self.buttons_per_page) #math.ceil
+    # def __init__(self, data: List[TabaccoData] = []) -> None:
+    #     self.data = data
+    #     self.buttons_per_page = 6
+    #     self.number_of_pages = -(-len(self.data) // self.buttons_per_page) #math.ceil
 
-    def update(self, data):
-        logging.log(30, "updated")
-        self.data = data
-        self.number_of_pages = -(-len(self.data) // self.buttons_per_page) #math.ceil
+    # def update(self, data):
+    #     logging.log(30, "updated")
+    #     self.data = data
+    #     self.number_of_pages = -(-len(self.data) // self.buttons_per_page) #math.ceil
+
         
     def show_page_keyboard(self, current_page: int = 1):
         keyboard = InlineKeyboardBuilder()
 
-        start_index = (current_page - 1) * self.buttons_per_page
-        end_index = min(start_index + self.buttons_per_page, len(self.data))
-
+        start_index, end_index = self.indexes(current_page=current_page)
         buttons = self.data[start_index:end_index]
 
         for raw in buttons:
             keyboard.button(
                 text = f"{raw.type} | {raw.brand} - {raw.label} - {raw.weight}g",
-                callback_data = NavigatePageKeyboard(action = "show_tabacco", current_page = current_page, tabacco_id=raw._id.__str__())
+                callback_data = NavigatePageKeyboard(action = "show_tabacco", current_page = current_page, kwargs=raw._id.__str__())
             )
 
         keyboard.adjust(1, repeat = True)
 
+        navigate_buttons = self.slide_page(current_page)
 
-        navigate_keyboards = self.page_bottom_slider(
-            first = NavigatePageKeyboard(action = "first", current_page = current_page),
-            prev = NavigatePageKeyboard(action = "prev", current_page = current_page),
-            next = NavigatePageKeyboard(action = "next", current_page = current_page),
-            last = NavigatePageKeyboard(action = "last", current_page = current_page),
-            static_callback = NavigatePageKeyboard(action = "static", current_page = current_page),
-            static_text = f" {current_page}/{self.number_of_pages} "
-        )
-
-
-
-        navigate_buttons = InlineKeyboardBuilder()
-
-        if self.number_of_pages > 1:
-            if current_page == 1:
-                navigate_buttons.attach(navigate_keyboards["first_page"])
-            elif current_page == self.number_of_pages and self.number_of_pages > 1:
-                navigate_buttons.attach(navigate_keyboards["last_page"])
-            else:
-                navigate_buttons.attach(navigate_keyboards["default_page"])
-            navigate_buttons.adjust(5,1)
-        else:
-            navigate_buttons.attach(navigate_keyboards["empty_page"])
-
-        keyboard.attach(navigate_buttons)
+        keyboard.row(*navigate_buttons.buttons, width = 5)
 
         back_button = InlineKeyboardBuilder()
         back_button.button(text = "<< Storage <<",callback_data = StorageNavigate(button_name = "main", type = "main"))
@@ -180,14 +156,14 @@ class ShowPageGenerator(BasicPageGenerator):
         data = await Invent.get_changes(tabacco_id)
 
         if not data:
-            keyboard.button(text = "Not inventarization yet.", callback_data = NavigatePageKeyboard(action = "static", current_page = current_page))
+            keyboard.button(text = "Not inventarizet yet.", callback_data = NavigatePageKeyboard(action = "static", current_page = current_page))
             keyboard.button(text = "<<", callback_data = NavigatePageKeyboard(action = "redraw", current_page = current_page))
             keyboard.adjust(1, repeat = True)
             return keyboard.as_markup()
         else:
             for change in data.changes:
                 keyboard.button(
-                    text = f"Id - {change._id}| Inspector: {change.user_id} ({change.expected_weight} -> {change.accepted_weight})", 
+                    text = f"Id - {change._id} | Inspector: {change.user_id} ({change.expected_weight} -> {change.accepted_weight})", 
                     callback_data = NavigatePageKeyboard(action = "static", current_page = current_page)
                 )
             
@@ -197,35 +173,16 @@ class ShowPageGenerator(BasicPageGenerator):
 
             return keyboard.as_markup()
     
-    async def navigate_callbacks(self, query: CallbackQuery, callback_data = NavigatePageKeyboard):
+    async def navigate_callbacks(self, query: CallbackQuery, callback_data: NavigatePageKeyboard):
         await query.answer()
 
-        if callback_data.action == "static":
+        current_page = self.get_current_page(callback_data)
+        if not current_page:
             return
-
-        if callback_data.action == "redraw":
-            current_page = callback_data.current_page
-
-        if callback_data.action == "first":
-            current_page = 1
-
-        if callback_data.action == "last":
-            current_page = self.number_of_pages
         
-        if callback_data.action == "prev":
-            current_page = callback_data.current_page - 1
-        
-        if callback_data.action == "next":
-            current_page = callback_data.current_page + 1
-        
-        if callback_data.action == "show_tabacco":
-            markup = await self.tabacco_history_keyboard(tabacco_id = callback_data.tabacco_id, current_page = callback_data.current_page)
+        markup = self.show_page_keyboard(current_page = current_page)
 
-            await query.message.edit_text(text = "Inventarization scope", reply_markup = markup)
-        else:
-            markup = self.show_page_keyboard(current_page = current_page)
-
-            await query.message.edit_text(text = "Storage", reply_markup = markup)
+        await query.message.edit_text(text = "Storage", reply_markup = markup)
 
         
 
@@ -250,59 +207,24 @@ class NumKeyboardCallback(CallbackData, prefix = "num_keyboard"):
     action: str
 
 class InventPageGenerator(BasicPageGenerator):
-    def __init__(self, data: List[TabaccoData] = []) -> None:
-        self.data = data
-        self.buttons_per_page = 6
-        self.number_of_pages = -(-len(self.data) // self.buttons_per_page) #math.ceil
-
-    def update(self, data):
-        logging.log(30, "updated")
-        self.data = data
-        self.number_of_pages = -(-len(self.data) // self.buttons_per_page) #math.ceil
-        
-    def show_page_keyboard(self, current_page: int = 1):
+    def invent_page_keyboard(self, current_page: int = 1):
         keyboard = InlineKeyboardBuilder()
 
-        start_index = (current_page - 1) * self.buttons_per_page
-        end_index = min(start_index + self.buttons_per_page, len(self.data))
-
+        start_index, end_index = self.indexes(current_page=current_page)
         buttons = self.data[start_index:end_index]
 
         for raw in buttons:
             keyboard.button(
                 text = f"{raw.type} | {raw.brand} - {raw.label} - {raw.weight}g",
-                callback_data = NavigatePageKeyboard(action = "select_button", current_page = current_page, tabacco_id = raw._id.__str__())
+                callback_data = NavigatePageKeyboard(action = "select_button", current_page = current_page, kwargs = raw._id.__str__())
             )
 
         keyboard.adjust(1, repeat = True)
 
+        navigate_buttons = self.slide_page(current_page)
 
-        navigate_keyboards = self.page_bottom_slider(
-            first = NavigatePageKeyboard(action = "first", current_page = current_page),
-            prev = NavigatePageKeyboard(action = "prev", current_page = current_page),
-            next = NavigatePageKeyboard(action = "next", current_page = current_page),
-            last = NavigatePageKeyboard(action = "last", current_page = current_page),
-            static_callback = NavigatePageKeyboard(action = "static", current_page = current_page),
-            static_text = f" {current_page}/{self.number_of_pages} "
-        )
-
-
-
-        navigate_buttons = InlineKeyboardBuilder()
-
-        if self.number_of_pages > 1:
-            if current_page == 1:
-                navigate_buttons.attach(navigate_keyboards["first_page"])
-            elif current_page == self.number_of_pages and self.number_of_pages > 1:
-                navigate_buttons.attach(navigate_keyboards["last_page"])
-            else:
-                navigate_buttons.attach(navigate_keyboards["default_page"])
-            navigate_buttons.adjust(5,1)
-        else:
-            navigate_buttons.attach(navigate_keyboards["empty_page"])
-
-        keyboard.attach(navigate_buttons)
-
+        keyboard.row(*navigate_buttons.buttons, width = 5)
+        
         back_button = InlineKeyboardBuilder()
         back_button.button(text = "<< Invent <<",callback_data = StorageNavigate(button_name = "invent", type = "category"))
 
@@ -313,21 +235,13 @@ class InventPageGenerator(BasicPageGenerator):
     async def navigate_page_slider(self, query: CallbackQuery, callback_data = NavigatePageKeyboard):
         await query.answer()
 
-        if callback_data.action == "first":
-            current_page = 1
+        current_page = self.get_current_page(callback_data)
+        if not current_page:
+            return
+        
+        markup = self.invent_page_keyboard(current_page = current_page)
 
-        if callback_data.action == "last":
-            current_page = self.number_of_pages
-        
-        if callback_data.action == "prev":
-            current_page = callback_data.current_page - 1
-        
-        if callback_data.action == "next":
-            current_page = callback_data.current_page + 1
-        
-        markup = self.show_page_keyboard(current_page = current_page)
-
-        await query.message.edit_text(text = "Storage", reply_markup = markup)
+        await query.message.edit_text(text = "Invent", reply_markup = markup)
 
     async def navigate_page_num_keyboard(self, query: CallbackQuery, callback_data: NumKeyboardCallback, state: FSMContext):
         await query.answer()

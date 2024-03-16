@@ -1,3 +1,4 @@
 from .tabacco import Tabacco, TabaccoData
 from .invent import Invent, Changes, InventData
-from .order import Order
+from .order import Order, OrderData
+from .bills import Bills, BillData

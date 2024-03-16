@@ -2,6 +2,7 @@ from pydantic import Field
 from typing import Union
 from dataclasses import dataclass
 from .basic import Basic, ObjectId
+from typing import List
 
 @dataclass
 class TabaccoData():
@@ -10,6 +11,7 @@ class TabaccoData():
     brand: str
     type: str
     weight: float
+    used_weight: float = 0.0
 
     def to_dict(self):
         return {
@@ -63,6 +65,14 @@ class Tabacco(Basic):
     async def get_by_brand(cls, brand: str):
         documents = cls._collection.find({"brand":brand})
         return [TabaccoData(**document) async for document in documents]
+    
+    @classmethod
+    async def find_many(cls, field: str, args: List):
+        if isinstance(field, str):
+            field = ObjectId(field)
+
+        query = {field: {"$in":args}}
+        return [TabaccoData(**document) async for document in cls._collection.find(query)]
     
     @classmethod
     async def update_weight(cls, id: Union[ObjectId, str], new_weight):

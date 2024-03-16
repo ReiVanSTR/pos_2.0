@@ -19,10 +19,15 @@ class InventForm(StatesGroup):
     confirm = State()
 
 
-class NavigateOrders(StatesGroup):
+class NavigateBills(StatesGroup):
     menu = State()
     new_order = State()
+    show_orders = State()
 
-class FormNewOrder(StatesGroup):
+class FormNewBill(StatesGroup):
     input_name = State()
     confirm = State()
+
+class EditBill(StatesGroup):
+    new_order = State()
+    open_order = State()

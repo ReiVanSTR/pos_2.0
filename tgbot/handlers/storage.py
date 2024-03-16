@@ -116,7 +116,7 @@ async def storage_commit_form(query: CallbackQuery, callback_data: StorageCommit
 
 show_page_generator = ShowPageGenerator()
 show_page_generator.connect_router(storage_router)
-show_page_generator.register_handler(show_page_generator.navigate_callbacks, [NavigateStorage.show, NavigatePageKeyboard.filter()])
+show_page_generator.register_handler(show_page_generator.navigate_callbacks, [NavigateStorage.show, NavigatePageKeyboard.filter(F.action.in_(["static", "redraw", "prev","next","last","first"]))])
 
 @storage_router.callback_query(StorageNavigate.filter(F.button_name == "show"))
 async def storage_show(query: CallbackQuery, state: FSMContext):
@@ -128,6 +128,12 @@ async def storage_show(query: CallbackQuery, state: FSMContext):
     markup = show_page_generator.show_page_keyboard()
 
     await query.message.edit_text("Storage:", reply_markup = markup)
+
+@storage_router.callback_query(NavigateStorage.show, NavigatePageKeyboard.filter(F.action == "show_tabacco"))
+async def storage_show_history(query: CallbackQuery, callback_data: NavigatePageKeyboard, state: FSMContext):
+    markup = await show_page_generator.tabacco_history_keyboard(tabacco_id = callback_data.kwargs, current_page = callback_data.current_page)
+
+    await query.message.edit_text(text = "Inventarization scope", reply_markup = markup)
 
 
 #inventarization
@@ -165,7 +171,7 @@ async def storage_start_invent(query: CallbackQuery, callback_data: NavigatePage
 
     markup = invent_page_generator.show_num_keyboard()
 
-    document = await Tabacco.get_by_id(callback_data.tabacco_id)
+    document = await Tabacco.get_by_id(callback_data.kwargs)
 
     await state.set_data({"item":document, "current_num": 0})
 
