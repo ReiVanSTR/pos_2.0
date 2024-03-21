@@ -175,6 +175,19 @@ async def orders_remove_from_cart(query: CallbackQuery, state: FSMContext, callb
 
     await query.message.edit_text("Cart", reply_markup = markup)
 
+@orders_router.callback_query(EditBill.new_order, OrderNavigateCallback.filter(F.action == "edit"))
+async def orders_edit_from_cart(query: CallbackQuery, state: FSMContext, callback_data: OrderNavigateCallback):
+    await query.answer()
+    data = await state.get_data()
+
+    current_tabacco = data[callback_data.bill_id]
+    await state.update_data({"current_tabacco":current_tabacco})
+    await state.update_data({"current_num":current_tabacco.used_weight})
+
+    markup = bill_keyboards.show_num_keyboard(current_num = current_tabacco.used_weight)
+
+    await query.message.edit_text("Input weight", reply_markup = markup)
+
 @orders_router.callback_query(EditBill.new_order, NumKeyboardCallback.filter(F.action == "commit"))
 async def orders_update_choosed_tabacco(query: CallbackQuery, state: FSMContext, callback_data: NavigatePageKeyboard):
     await query.answer()
@@ -209,7 +222,7 @@ async def orders_commit_cost(query: CallbackQuery, state: FSMContext, callback_d
     cart = data.get("cart")
     bill_id = data.get("bill_id")
 
-    order_id = await Order.create_order("test_day", query.from_user.id, [{key:value.used_weight} for key, value in cart.items()], cost)
+    order_id = await Order.create_order("Shisha", query.from_user.id, [{key:value.used_weight} for key, value in cart.items()], cost)
     await Bills.update_orders(bill_id, order_id)
 
     markup = await bill_keyboards.open_bill(await Bills.get_bill(bill_id), data.get("current_page"))

@@ -15,7 +15,8 @@ class BillsCommit(CallbackData, prefix = "orders_commit"):
 
 class OrderNavigateCallback(CallbackData, prefix = "order"):
     action: str
-    bill_id: str
+    bill_id: Optional[str] = Field(default = "")
+    order_id: Optional[str] = Field(default = "")
 
 class NavigatePageKeyboard(CallbackData, prefix = "page_callback"):
     action: str #first, prev, next, last, static

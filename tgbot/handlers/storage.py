@@ -159,7 +159,7 @@ async def storage_choose_invent_type(query: CallbackQuery, state: FSMContext):
 
     invent_page_generator.update(await Tabacco.get_all())
 
-    markup = invent_page_generator.show_page_keyboard()
+    markup = invent_page_generator.invent_page_keyboard()
 
     await query.message.edit_text("Single invent:", reply_markup = markup)
 
@@ -211,6 +211,6 @@ async def storage_commit_invent(query: CallbackQuery, callback_data: StorageNavi
             await query.message.edit_text("Operation canceled!")
 
     invent_page_generator.update(await Tabacco.get_all())
-    markup = invent_page_generator.show_page_keyboard()
+    markup = invent_page_generator.invent_page_keyboard()
 
     await query.message.edit_text("Single invent:", reply_markup = markup)      
