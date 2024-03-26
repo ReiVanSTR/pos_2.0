@@ -229,3 +229,6 @@ class BillKeyboards(BasicPageGenerator):
         keyboard.adjust(2, repeat=True)
 
         return keyboard.as_markup()
+
+    def show_order_keyboard(self):
+        pass

@@ -191,3 +191,8 @@ def load_config(path: str = None) -> Config:
         # redis=RedisConfig.from_env(env),
         misc=Miscellaneous(),
     )
+
+
+@dataclass
+class KeyboardsConfig():
+    

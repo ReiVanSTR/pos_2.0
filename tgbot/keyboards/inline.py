@@ -28,7 +28,7 @@ def simple_menu_keyboard():
     keyboard.button(
         text="📝 Створити замовлення",
         callback_data="create_order"
-    )
+    )    
     keyboard.button(
         text="📋 Мої замовлення",
         # In this simple example, we use a string as callback_data

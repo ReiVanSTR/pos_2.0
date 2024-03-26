@@ -7,7 +7,6 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from typing import List, Optional, Dict
 
 from bson import ObjectId
-
 from ..models import Tabacco, TabaccoData, Invent, InventData
 from .pager import BasicPageGenerator
 from ..misc.states import InventForm
@@ -54,7 +53,7 @@ def storage_brand_types():
             text = brand,
             callback_data = Insert(brand_type = brand)
         )
-    
+
     keyboard.button(
         text = "<<",
         callback_data = StorageNavigate(button_name = "main", type = "main")
