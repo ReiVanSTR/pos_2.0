@@ -7,7 +7,7 @@ from aiogram.types import Message, CallbackQuery
 from tgbot.keyboards.inline import OrderCallbackData
 
 from ..keyboards.orders import BillKeyboards
-from ..keyboards.callbacks import BillsCommit, BillsNavigateCallback, NavigatePageKeyboard, OrderNavigateCallback, NumKeyboardCallback
+from ..keyboards.callbacks import BillsCommit, BillsNavigateCallback, NavigatePageKeyboard, OrderNavigateCallback, NumKeyboardCallback, MenuNavigateCallback
 
 from ..models import Order, Bills, Tabacco
 from ..misc.states import NavigateBills, FormNewBill, EditBill
@@ -20,20 +20,22 @@ orders_router = Router()
 
 bill_keyboards = BillKeyboards()
 
-@orders_router.message(F.text.startswith('/') & F.text.contains("bills"))
-async def bills_start(message: Message, state: FSMContext, callback_data = None):
-    await state.set_state(NavigateBills.menu)
+# Open bills menu
 
-    markup = bill_keyboards.bills_menu()
-    await message.answer("Bills:", reply_markup = markup)
-
-@orders_router.callback_query(BillsNavigateCallback.filter(F.button_name =="main"))
-async def bills_start_callback(query: CallbackQuery, state: FSMContext):
-    await state.set_state(NavigateBills.menu)
+@orders_router.callback_query(MenuNavigateCallback.filter(F.button_name == "bills"))
+async def bills_start(query: CallbackQuery, state: FSMContext, callback_data = None):
 
     markup = bill_keyboards.bills_menu()
     await query.message.edit_text("Bills:", reply_markup = markup)
 
+@orders_router.callback_query(BillsNavigateCallback.filter(F.button_name =="main"))
+async def bills_start_callback(query: CallbackQuery, state: FSMContext):
+
+    markup = bill_keyboards.bills_menu()
+    await query.message.edit_text("Bills:", reply_markup = markup)
+
+
+#New bill action
 @orders_router.callback_query(BillsNavigateCallback.filter(F.button_name == "new_bill"))
 async def bills_add_new_order(query: CallbackQuery, state: FSMContext):
     await query.answer()
@@ -61,6 +63,8 @@ async def bills_new_bill_commit(query: CallbackQuery, state: FSMContext, callbac
 
     markup = bill_keyboards.bills_menu()
     await query.message.edit_text("Bills", reply_markup = markup)
+
+
 
 
 bill_keyboards.connect_router(orders_router)

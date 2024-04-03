@@ -1,8 +1,8 @@
 from datetime import datetime
 from dataclasses import dataclass
-from .basic import Basic, ObjectId 
 from pydantic import Field
 from typing import List
+from .basic import ObjectId, Basic
 
 
 @dataclass
@@ -41,6 +41,11 @@ class Bills(Basic):
         inserted_document = await cls._collection.insert_one(document)
         return inserted_document.inserted_id
     
+    @classmethod
+    async def count_documents(cls, filtr = {}):
+        response = await cls._collection.count_documents(filtr)
+        return response
+
     @classmethod
     async def get_all_bills(cls, filtr = {}):
         documents = cls._collection.find(filtr)

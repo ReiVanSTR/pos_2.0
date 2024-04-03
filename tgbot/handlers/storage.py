@@ -9,7 +9,7 @@ from tgbot.keyboards.storage import storage_menu, storage_brand_types, storage_b
 
 from ..models import Tabacco, Invent, Changes
 from ..misc.states import NavigateStorage, Form, InventForm
-
+from ..keyboards.callbacks import MenuNavigateCallback
 from typing import Union
 
 from datetime import datetime
@@ -19,16 +19,14 @@ storage_router = Router()
 
 
 #command(/storage)
-@storage_router.message(F.text.startswith('/') & F.text.contains("storage"))
-async def storage_start(message: Message, state: FSMContext, callback_data = None):
-    await state.set_state(NavigateStorage.menu)
+@storage_router.callback_query(MenuNavigateCallback.filter(F.button_name == "storage"))
+async def storage_start(query: CallbackQuery, state: FSMContext, callback_data = None):
 
     markup = storage_menu()
-    await message.answer("Storage:", reply_markup = markup)
+    await query.message.edit_text("Storage:", reply_markup = markup)
 
 @storage_router.callback_query(StorageNavigate.filter(F.button_name == "main"))
 async def storage_back(query: CallbackQuery, state: FSMContext):
-    await state.set_state(NavigateStorage.menu)
 
     markup = storage_menu()
     await query.message.edit_text("Storage:", reply_markup = markup)

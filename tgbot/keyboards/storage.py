@@ -11,6 +11,7 @@ from bson import ObjectId
 from ..models import Tabacco, TabaccoData, Invent, InventData
 from .pager import BasicPageGenerator
 from ..misc.states import InventForm
+from .callbacks import MenuNavigateCallback
  
 menu = ["Add", "Invent", "Show"]
 
@@ -43,6 +44,10 @@ def storage_menu():
             text = menu_button,
             callback_data = StorageNavigate(button_name = menu_button.lower(), type = "category")
         )
+    
+    back_button = InlineKeyboardBuilder().button(text = "<<Menu<<", callback_data = MenuNavigateCallback(button_name = "main_menu"))
+    
+    keyboard.attach(back_button)
 
     return keyboard.as_markup()
 

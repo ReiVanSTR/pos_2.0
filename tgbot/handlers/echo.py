@@ -6,7 +6,7 @@ from aiogram.utils.markdown import hcode
 echo_router = Router()
 
 
-@echo_router.message(F.text, StateFilter(None))
+@echo_router.message(F.text, StateFilter(State))
 async def bot_echo(message: types.Message):
     text = ["Echo with out state", "Message text:", message.text]
 

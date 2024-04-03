@@ -25,3 +25,10 @@ class NavigatePageKeyboard(CallbackData, prefix = "page_callback"):
 
 class NumKeyboardCallback(CallbackData, prefix = "num_keyboard"):
     action: str
+
+
+
+####
+    
+class MenuNavigateCallback(CallbackData, prefix = "menu_navigate"):
+    button_name: str
