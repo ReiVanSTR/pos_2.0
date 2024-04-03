@@ -12,7 +12,7 @@ from tgbot.handlers import orders
 
 from ..models import BillData, OrderData, Order
 
-from .callbacks import BillsCommit, BillsNavigateCallback, OrderNavigateCallback, NavigatePageKeyboard, NumKeyboardCallback
+from .callbacks import BillsCommit, BillsNavigateCallback, OrderNavigateCallback, NavigatePageKeyboard, NumKeyboardCallback, MenuNavigateCallback
 from .pager import BasicPageGenerator
 
 
@@ -44,6 +44,9 @@ class BillKeyboards(BasicPageGenerator):
                 text = menu_button,
                 callback_data = self._navigate_callback(button_name = menu_button.replace(" ", "_").lower(), type = "category")
             )
+        
+        back_button = InlineKeyboardBuilder().button(text = "<<Menu<<", callback_data = MenuNavigateCallback(button_name = "main_menu"))
+        keyboard.attach(back_button)
 
         return keyboard.as_markup()
 
