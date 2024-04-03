@@ -7,7 +7,7 @@ from aiogram.types import Message, CallbackQuery
 from tgbot.keyboards.inline import OrderCallbackData
 
 from ..keyboards.orders import BillKeyboards
-from ..keyboards.callbacks import BillsCommit, BillsNavigateCallback, NavigatePageKeyboard, OrderNavigateCallback, NumKeyboardCallback
+from ..keyboards.callbacks import BillsCommit, BillsNavigateCallback, NavigatePageKeyboard, OrderNavigateCallback, NumKeyboardCallback, MenuNavigateCallback
 
 from ..models import Order, Bills, Tabacco
 from ..misc.states import NavigateBills, FormNewBill, EditBill
@@ -20,20 +20,22 @@ orders_router = Router()
 
 bill_keyboards = BillKeyboards()
 
-@orders_router.message(F.text.startswith('/') & F.text.contains("bills"))
-async def bills_start(message: Message, state: FSMContext, callback_data = None):
-    await state.set_state(NavigateBills.menu)
+# Open bills menu
 
-    markup = bill_keyboards.bills_menu()
-    await message.answer("Bills:", reply_markup = markup)
-
-@orders_router.callback_query(BillsNavigateCallback.filter(F.button_name =="main"))
-async def bills_start_callback(query: CallbackQuery, state: FSMContext):
-    await state.set_state(NavigateBills.menu)
+@orders_router.callback_query(MenuNavigateCallback.filter(F.button_name == "bills"))
+async def bills_start(query: CallbackQuery, state: FSMContext, callback_data = None):
 
     markup = bill_keyboards.bills_menu()
     await query.message.edit_text("Bills:", reply_markup = markup)
 
+@orders_router.callback_query(BillsNavigateCallback.filter(F.button_name =="main"))
+async def bills_start_callback(query: CallbackQuery, state: FSMContext):
+
+    markup = bill_keyboards.bills_menu()
+    await query.message.edit_text("Bills:", reply_markup = markup)
+
+
+#New bill action
 @orders_router.callback_query(BillsNavigateCallback.filter(F.button_name == "new_bill"))
 async def bills_add_new_order(query: CallbackQuery, state: FSMContext):
     await query.answer()
@@ -61,6 +63,8 @@ async def bills_new_bill_commit(query: CallbackQuery, state: FSMContext, callbac
 
     markup = bill_keyboards.bills_menu()
     await query.message.edit_text("Bills", reply_markup = markup)
+
+
 
 
 bill_keyboards.connect_router(orders_router)
@@ -175,6 +179,19 @@ async def orders_remove_from_cart(query: CallbackQuery, state: FSMContext, callb
 
     await query.message.edit_text("Cart", reply_markup = markup)
 
+@orders_router.callback_query(EditBill.new_order, OrderNavigateCallback.filter(F.action == "edit"))
+async def orders_edit_from_cart(query: CallbackQuery, state: FSMContext, callback_data: OrderNavigateCallback):
+    await query.answer()
+    data = await state.get_data()
+
+    current_tabacco = data[callback_data.bill_id]
+    await state.update_data({"current_tabacco":current_tabacco})
+    await state.update_data({"current_num":current_tabacco.used_weight})
+
+    markup = bill_keyboards.show_num_keyboard(current_num = current_tabacco.used_weight)
+
+    await query.message.edit_text("Input weight", reply_markup = markup)
+
 @orders_router.callback_query(EditBill.new_order, NumKeyboardCallback.filter(F.action == "commit"))
 async def orders_update_choosed_tabacco(query: CallbackQuery, state: FSMContext, callback_data: NavigatePageKeyboard):
     await query.answer()
@@ -209,7 +226,7 @@ async def orders_commit_cost(query: CallbackQuery, state: FSMContext, callback_d
     cart = data.get("cart")
     bill_id = data.get("bill_id")
 
-    order_id = await Order.create_order("test_day", query.from_user.id, [{key:value.used_weight} for key, value in cart.items()], cost)
+    order_id = await Order.create_order("Shisha", query.from_user.id, [{key:value.used_weight} for key, value in cart.items()], cost)
     await Bills.update_orders(bill_id, order_id)
 
     markup = await bill_keyboards.open_bill(await Bills.get_bill(bill_id), data.get("current_page"))

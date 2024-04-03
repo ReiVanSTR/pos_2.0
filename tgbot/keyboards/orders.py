@@ -3,7 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardMarkup, CallbackQuery
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Union
 from datetime import datetime
 
 from tgbot import keyboards
@@ -12,7 +12,7 @@ from tgbot.handlers import orders
 
 from ..models import BillData, OrderData, Order
 
-from .callbacks import BillsCommit, BillsNavigateCallback, OrderNavigateCallback, NavigatePageKeyboard, NumKeyboardCallback
+from .callbacks import BillsCommit, BillsNavigateCallback, OrderNavigateCallback, NavigatePageKeyboard, NumKeyboardCallback, MenuNavigateCallback
 from .pager import BasicPageGenerator
 
 
@@ -44,6 +44,9 @@ class BillKeyboards(BasicPageGenerator):
                 text = menu_button,
                 callback_data = self._navigate_callback(button_name = menu_button.replace(" ", "_").lower(), type = "category")
             )
+        
+        back_button = InlineKeyboardBuilder().button(text = "<<Menu<<", callback_data = MenuNavigateCallback(button_name = "main_menu"))
+        keyboard.attach(back_button)
 
         return keyboard.as_markup()
 
@@ -90,7 +93,7 @@ class BillKeyboards(BasicPageGenerator):
             for order in bill.orders:
                 result = await Order.get_order(order_id = order)
                 keyboard.button(text = f"{result.order_name} | {result.cost} pln",
-                        callback_data = OrderNavigateCallback(action = "static", bill_id = bill._id.__str__()))
+                        callback_data = OrderNavigateCallback(action = "open_order", bill_id = bill._id.__str__()))
         else:
             keyboard.button(text = "(No orders)",
                         callback_data = OrderNavigateCallback(action = "static", bill_id = bill._id.__str__()))
@@ -108,7 +111,7 @@ class BillKeyboards(BasicPageGenerator):
         
         keyboard.row(*operation_keyboard.buttons, width = 2)
 
-        keyboard.attach(InlineKeyboardBuilder().button(text = "<< Bills <<", callback_data = NavigatePageKeyboard(action = "redraw", current_page = current_page)))
+        keyboard.attach(InlineKeyboardBuilder().button(text = "<< Bills <<", callback_data = BillsNavigateCallback(button_name = "bills", type = "category")))
         
         return keyboard.as_markup()
     
@@ -196,7 +199,7 @@ class BillKeyboards(BasicPageGenerator):
 
         await query.message.edit_text("Input invent weight", reply_markup = markup)
 
-    def show_num_keyboard(self, current_num = 0):
+    def show_num_keyboard(self, current_num: Union[int, float] = 0):
         keyboard = InlineKeyboardBuilder(self.page_num_keyboard(callback = NumKeyboardCallback, current_num = current_num).inline_keyboard)
 
         keyboard.button(text = "Cancel", callback_data = NavigatePageKeyboard(action = "redraw", current_page = 1))
@@ -221,10 +224,16 @@ class BillKeyboards(BasicPageGenerator):
     def show_choose_cost(self):
         keyboard = InlineKeyboardBuilder()
 
-        menu = ["80", "100", "64", "80", "40"]
+        cost_menu = [
+            {"Standart":80},
+            {"Premium": 100},
+            {"Stuff": 40},
+            {"RW (Chief)": 0}
+        ]
 
-        for button in menu:
-            keyboard.button(text = button, callback_data = OrderNavigateCallback(action = "cost", bill_id = button))
+        for type in cost_menu:
+            name, cost = list(type.items())[0]
+            keyboard.button(text = name, callback_data = OrderNavigateCallback(action = "cost", bill_id = str(cost)))
 
         keyboard.adjust(2, repeat=True)
 

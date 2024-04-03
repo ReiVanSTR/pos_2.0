@@ -8,6 +8,6 @@ admin_router = Router()
 admin_router.message.filter(AdminFilter())
 
 
-@admin_router.message(CommandStart())
-async def admin_start(message: Message):
-    await message.reply(f"Hello, {message.from_user.full_name}. Admin permission accepted")
+# @admin_router.message(CommandStart())
+# async def admin_start(message: Message):
+#     await message.reply(f"Hello, {message.from_user.full_name}. Admin permission accepted")

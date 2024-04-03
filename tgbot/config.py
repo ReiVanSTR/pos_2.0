@@ -103,7 +103,6 @@ class RedisConfig:
         The host where Redis server is located.
     """
 
-    redis_pass: Optional[str]
     redis_port: Optional[int]
     redis_host: Optional[str]
 
@@ -111,22 +110,18 @@ class RedisConfig:
         """
         Constructs and returns a Redis DSN (Data Source Name) for this database configuration.
         """
-        if self.redis_pass:
-            return f"redis://:{self.redis_pass}@{self.redis_host}:{self.redis_port}/0"
-        else:
-            return f"redis://{self.redis_host}:{self.redis_port}/0"
+        return f"redis://{self.redis_host}:{self.redis_port}/0"
 
     @staticmethod
     def from_env(env: Env):
         """
         Creates the RedisConfig object from environment variables.
         """
-        redis_pass = env.str("REDIS_PASSWORD")
         redis_port = env.int("REDIS_PORT")
         redis_host = env.str("REDIS_HOST")
 
         return RedisConfig(
-            redis_pass=redis_pass, redis_port=redis_port, redis_host=redis_host
+            redis_port=redis_port, redis_host=redis_host
         )
 
 
@@ -188,7 +183,7 @@ def load_config(path: str = None) -> Config:
     return Config(
         tg_bot=TgBot.from_env(env),
         # db=DbConfig.from_env(env),
-        # redis=RedisConfig.from_env(env),
+        redis=RedisConfig.from_env(env),
         misc=Miscellaneous(),
     )
 
