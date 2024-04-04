@@ -105,12 +105,13 @@ class RedisConfig:
 
     redis_port: Optional[int]
     redis_host: Optional[str]
+    redis_passwd: Optional[str]
 
     def dsn(self) -> str:
         """
         Constructs and returns a Redis DSN (Data Source Name) for this database configuration.
         """
-        return f"redis://{self.redis_host}:{self.redis_port}/0"
+        return f"redis://default:{self.redis_passwd}@{self.redis_host}:{self.redis_port}/0"
 
     @staticmethod
     def from_env(env: Env):
@@ -119,9 +120,10 @@ class RedisConfig:
         """
         redis_port = env.int("REDIS_PORT")
         redis_host = env.str("REDIS_HOST")
+        redis_passwd = env.str("REDIS_PASSWORD")
 
         return RedisConfig(
-            redis_port=redis_port, redis_host=redis_host
+            redis_port=redis_port, redis_host=redis_host, redis_passwd=redis_passwd
         )
 
 
