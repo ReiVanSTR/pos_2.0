@@ -190,4 +190,4 @@ def load_config(path: str = None) -> Config:
 
 @dataclass
 class KeyboardsConfig():
-    
+    pass

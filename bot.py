@@ -78,12 +78,13 @@ def get_storage(config):
         Storage: The storage object based on the configuration.
 
     """
-    # if config.tg_bot.use_redis:
-        # return RedisStorage.from_url(
-    #         config.redis.dsn(),
-    #         key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
-    #     )
-    return MemoryStorage()
+    if config.tg_bot.use_redis:
+        return RedisStorage.from_url(
+            config.redis.dsn(),
+            key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
+        )
+    else:
+        return MemoryStorage()
 
 
 async def main():

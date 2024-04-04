@@ -10,7 +10,7 @@ from tgbot import keyboards
 from tgbot.handlers import orders
 
 
-from ..models import BillData, OrderData, Order
+from ..models import BillData, OrderData, Order, User, TabaccoData
 
 from .callbacks import BillsCommit, BillsNavigateCallback, OrderNavigateCallback, NavigatePageKeyboard, NumKeyboardCallback, MenuNavigateCallback
 from .pager import BasicPageGenerator
@@ -50,14 +50,15 @@ class BillKeyboards(BasicPageGenerator):
 
         return keyboard.as_markup()
 
-    def bills_list(self, current_page = 1):
+    async def bills_list(self, current_page = 1):
         keyboard = InlineKeyboardBuilder()
 
         start_index, end_index = self.indexes(current_page=current_page)
         buttons = self.data[start_index:end_index]
 
         for raw in buttons:
-            keyboard.button(text = f"{raw.bill_name} | {raw.created_by} | {raw.timestamp.strftime('%d-%m %H:%M')}", callback_data = OrderNavigateCallback(action = "open_bill", bill_id=raw._id.__str__()))
+            user = await User.get_user_by_user_id(raw.created_by)
+            keyboard.button(text = f"{raw.bill_name} | {user.username} | {raw.timestamp.strftime('%d-%m %H:%M')}", callback_data = OrderNavigateCallback(action = "open_bill", bill_id=raw._id.__str__()))
 
         keyboard.adjust(1, repeat = True)
 
@@ -210,6 +211,8 @@ class BillKeyboards(BasicPageGenerator):
         keyboard = InlineKeyboardBuilder()
 
         for key, tabacco in cart.items():
+            tabacco = TabaccoData(**tabacco)
+            logging.info(tabacco)
             builder = InlineKeyboardBuilder()
             builder.button(text = f"{tabacco.brand} | {tabacco.label} | Used: {tabacco.used_weight}g", callback_data = OrderNavigateCallback(action = "static", bill_id = " "))
             builder.button(text = "📝", callback_data = OrderNavigateCallback(action = "edit", bill_id = key))
