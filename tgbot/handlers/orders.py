@@ -110,7 +110,7 @@ async def orders_close_bill(query: CallbackQuery, state: FSMContext, callback_da
     
     bill_keyboards.update(data = await Bills.get_all_bills({"is_closed":False}))    
 
-    markup = bill_keyboards.bills_list()
+    markup = await bill_keyboards.bills_list()
 
     logging.log(30, f"Closed bill {bill.bill_name}. Crerated by {bill.created_by}. Closed by {query.from_user.id}")
     await query.message.edit_text("Bill", reply_markup = markup)
