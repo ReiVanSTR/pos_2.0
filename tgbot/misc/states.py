@@ -19,15 +19,35 @@ class InventForm(StatesGroup):
     confirm = State()
 
 
-class NavigateBills(StatesGroup):
+class OrderStates(StatesGroup):
+    open_bill = State()
+
+    
+
+
+####
+class BillStates(StatesGroup):
+    bills_menu = State()
+    bills_list = State()
+    open_bill = State()
+    close_bill = State()
+    new_bill = State()
+
+    edit_order = State()
+
+class MenuStates(StatesGroup):
     menu = State()
-    new_order = State()
-    show_orders = State()
 
 class FormNewBill(StatesGroup):
     input_name = State()
     confirm = State()
 
-class EditBill(StatesGroup):
+class NewOrder(StatesGroup):
     new_order = State()
+    new_hookah = State()
+    open_cart = State()
+    choose_tabacco = State()
+    edit_weight = State()
+    choose_cost = State()
+
     open_order = State()

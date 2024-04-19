@@ -2,7 +2,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from .basic import Basic, ObjectId 
 from pydantic import Field
-from typing import List, Dict
+from typing import List, Dict, Union
 
 @dataclass
 class OrderData:
@@ -37,7 +37,9 @@ class Order(Basic):
         return inserted_document.inserted_id
     
     @classmethod
-    async def get_order(cls, order_id):
+    async def get_order(cls, order_id: Union[str, ObjectId]):
+        if isinstance(order_id, str):
+            order_id = ObjectId(order_id)
         return OrderData(**await cls._collection.find_one({"_id":order_id}))
     
 

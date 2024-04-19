@@ -1,8 +1,10 @@
-from multiprocessing.util import is_exiting
+import logging
 from typing import Callable, Dict, Any, Awaitable
 
 from aiogram import BaseMiddleware
 from aiogram.types import Message
+from aiogram.fsm.scene import HistoryManager
+from ..misc.history_manager import Manager
 
 from ..models import User, UserData
 
@@ -18,7 +20,8 @@ class UserMiddleware(BaseMiddleware):
     ) -> Any:
         if not await User.is_exists(event.from_user.id):
             return
-        
+        data["HistoryManager"] = HistoryManager(state = data.get("state"))
+        data["Manager"] = Manager(state = data.get("state"), size = 15)
         user = await User.get_user_by_user_id(event.from_user.id)
         data["user"] = user
         return await handler(event, data)

@@ -1,237 +1,251 @@
-from ast import Or
 import logging
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
-
-from tgbot.keyboards.inline import OrderCallbackData
-
-from ..keyboards.orders import BillKeyboards
-from ..keyboards.callbacks import BillsCommit, BillsNavigateCallback, NavigatePageKeyboard, OrderNavigateCallback, NumKeyboardCallback, MenuNavigateCallback
-
-from ..models import Order, Bills, Tabacco
-from ..misc.states import NavigateBills, FormNewBill, EditBill
-
+from aiogram.types import CallbackQuery
+from aiogram.filters import StateFilter
 from typing import Union
 
-from datetime import datetime
+from ..misc.history_manager import Manager
+from ..keyboards.orders import OrderKeyboards
+from ..keyboards.callbacks import (
+    NavigatePageKeyboard, 
+    OrderNavigateCallback, 
+    NumKeyboardCallback, 
+)
+
+from ..models import Order, Bills, Tabacco
+from ..misc.states import NewOrder, BillStates
 
 orders_router = Router()
 
-bill_keyboards = BillKeyboards()
-
-# Open bills menu
-
-@orders_router.callback_query(MenuNavigateCallback.filter(F.button_name == "bills"))
-async def bills_start(query: CallbackQuery, state: FSMContext, callback_data = None):
-
-    markup = bill_keyboards.bills_menu()
-    await query.message.edit_text("Bills:", reply_markup = markup)
-
-@orders_router.callback_query(BillsNavigateCallback.filter(F.button_name =="main"))
-async def bills_start_callback(query: CallbackQuery, state: FSMContext):
-
-    markup = bill_keyboards.bills_menu()
-    await query.message.edit_text("Bills:", reply_markup = markup)
+order_keyboars = OrderKeyboards()
+order_keyboars.connect_router(orders_router)
+order_keyboars.register_handler(order_keyboars.navigate_page_slider, [NewOrder.new_hookah, NavigatePageKeyboard.filter(F.action.in_(["first", "last", "prev","next","redraw"]))])
+order_keyboars.register_handler(order_keyboars.navigate_page_num_keyboard, [NewOrder.choose_tabacco, NumKeyboardCallback.filter(F.action.not_in(["commit"]))])
+order_keyboars.register_handler(order_keyboars.navigate_page_num_keyboard, [NewOrder.edit_weight, NumKeyboardCallback.filter(F.action.not_in(["commit"]))])
 
 
-#New bill action
-@orders_router.callback_query(BillsNavigateCallback.filter(F.button_name == "new_bill"))
-async def bills_add_new_order(query: CallbackQuery, state: FSMContext):
+@orders_router.callback_query(StateFilter(BillStates.bills_list), OrderNavigateCallback.filter(F.action == "open_bill"))
+async def orders_open_bill(query: CallbackQuery, state: FSMContext, callback_data: OrderNavigateCallback, Manager: Manager):
     await query.answer()
-    await state.set_state(FormNewBill.input_name)
-
-    await query.message.edit_text("Input bill name", reply_markup = None)
-
-@orders_router.message(FormNewBill.input_name, F.text.is_not(None))
-async def bills_new_bill_name(message: Message, state: FSMContext):
-    await state.set_state(FormNewBill.confirm)
-
-    await state.set_data(data = {"order_name":message.text.strip()})
-
-    markup = bill_keyboards.bills_commit()
-    await message.answer(f"Is correct? \n Table name: {message.text.strip()}", reply_markup = markup)
-
-@orders_router.callback_query(FormNewBill.confirm, BillsCommit.filter())
-async def bills_new_bill_commit(query: CallbackQuery, state: FSMContext, callback_data: BillsCommit):
-    await query.answer()
-
-    if callback_data.commit == "yes":
-        data = await state.get_data()
-
-        await Bills.create_bill(bill_name = data["order_name"], user_id = query.from_user.id)
-
-    markup = bill_keyboards.bills_menu()
-    await query.message.edit_text("Bills", reply_markup = markup)
-
-
-
-
-bill_keyboards.connect_router(orders_router)
-bill_keyboards.register_handler(bill_keyboards.navigate_page_slider, [NavigateBills.show_orders, NavigatePageKeyboard.filter(F.action.in_(["first", "last", "prev","next","redraw"]))])
-
-@orders_router.callback_query(BillsNavigateCallback.filter(F.button_name == "bills"))
-async def orders_add_new_order(query: CallbackQuery, state: FSMContext):
-    await query.answer()
-    await state.set_state(NavigateBills.show_orders)
-
-    bill_keyboards.update(data = await Bills.get_all_bills({"is_closed":False}))    
-    await state.set_data(data = {"current_page":1})
-    markup = await bill_keyboards.bills_list()
-
-    await query.message.edit_text("Bill", reply_markup = markup)
-
-@orders_router.callback_query(OrderNavigateCallback.filter(F.action == "open_bill"))
-async def orders_open_bill(query: CallbackQuery, state: FSMContext, callback_data: OrderNavigateCallback):
-    await query.answer()
-    await state.set_state(NavigateBills.show_orders)
-    data = await state.get_data()
-    await state.update_data({"bill_id":callback_data.bill_id})
+    await Manager.push(BillStates.open_bill.state, {"bill_id":callback_data.bill_id})
    
-    markup = await bill_keyboards.open_bill(await Bills.get_bill(callback_data.bill_id), data.get("current_page"))
+    markup = await order_keyboars.open_bill(await Bills.get_bill(callback_data.bill_id))
 
     await query.message.edit_text("Bill", reply_markup = markup)
 
-@orders_router.callback_query(OrderNavigateCallback.filter(F.action == "close_bill"))
-async def orders_close_bill(query: CallbackQuery, state: FSMContext, callback_data: OrderNavigateCallback):
+
+
+@orders_router.callback_query(StateFilter(BillStates.open_bill), OrderNavigateCallback.filter(F.action == "add_new_order"))
+async def orders_new_order(query: CallbackQuery, state: FSMContext, Manager: Manager):
+    await query.answer()
+    await Manager.push(state = NewOrder.new_order.state)
+
+    markup = order_keyboars.new_order()
+
+    await query.message.edit_text("New order", reply_markup = markup)
+
+
+@orders_router.callback_query(StateFilter(NewOrder.new_order), OrderNavigateCallback.filter(F.action == "hookah"))
+async def orders_select_type(query: CallbackQuery, state: FSMContext, Manager: Manager):
+    await query.answer()
+    await Manager.push(state = NewOrder.new_hookah.state, data={"cart":{}, "current_page":1}, push = True)
+    await state.set_state(NewOrder.new_hookah)
+
+    cart = await Manager.get_data("cart")
+    order_keyboars.update(data = await Tabacco.get_all())
+
+    markup = order_keyboars.choose_tabacco(cart = cart)
+
+    await query.message.edit_text("New order", reply_markup = markup)
+
+
+@orders_router.callback_query(StateFilter(NewOrder.new_hookah), OrderNavigateCallback.filter(F.action == "choose_tabacco"))
+async def orders_choose_tabacco(query: CallbackQuery, Manager: Manager, callback_data: OrderNavigateCallback):
+    await query.answer()
+    current_tabacco = await Tabacco.get_by_id(callback_data.tabacco_id)
+    await Manager.push(state = NewOrder.choose_tabacco.state, data = {"current_tabacco":current_tabacco.to_dict(),"current_num":0})
+    markup = order_keyboars.show_num_keyboard()
+
+    await query.message.edit_text("Input weight", reply_markup = markup)
+
+
+@orders_router.callback_query(StateFilter(NewOrder.choose_tabacco), NumKeyboardCallback.filter(F.action == "commit"))
+async def orders_commit_choose_tabacco(query: CallbackQuery, Manager: Manager):
+    current_tabacco = await Manager.get_data("current_tabacco")
+    used_weight =  await Manager.get_data("current_num")
+    if used_weight == 0:
+        await query.answer(text = "Weight can't be zero", show_alert = True)
+        return
+
     await query.answer()
 
-    await Bills.close_bill(callback_data.bill_id)
+    data = {
+        current_tabacco.get("_id"):{"used_weight": used_weight}
+    }
+    await Manager.push_data(NewOrder.new_hookah, data, "cart", True)
+    await Manager.goto(NewOrder.new_hookah)
 
-    bill = await Bills.get_bill(callback_data.bill_id)
+    cart = await Manager.get_data("cart")
+    markup = order_keyboars.choose_tabacco(cart = cart)
 
-    for order in bill.orders:
-        result = await Order.get_order(order)
-        for data in result.cart:
-            id, weight = list(data.items())[0]
-            tabacco = await Tabacco.get_by_id(id)
-            await Tabacco.update_weight(id, tabacco.weight - weight)
+    await query.message.edit_text(text = "Choose tabacco", reply_markup = markup)
 
+@orders_router.callback_query(StateFilter(NewOrder.new_hookah), OrderNavigateCallback.filter(F.action == "open_cart"))
+async def orders_show_cart(query: CallbackQuery, state: FSMContext, Manager: Manager):
+    await query.answer()
+    cart = await Manager.get_data("cart")
+    await Manager.push(NewOrder.open_cart.state)
+    markup = await order_keyboars.show_cart_keyboard(cart)
+
+    await query.message.edit_text("Cart", reply_markup = markup)
+
+
+@orders_router.callback_query(StateFilter(NewOrder.open_cart), OrderNavigateCallback.filter(F.action == "remove"))
+async def orders_remove_from_cart(query: CallbackQuery, Manager: Manager, callback_data: OrderNavigateCallback):
+    await query.answer()
+
+    cart = await Manager.get_data("cart")
+    cart.pop(callback_data.tabacco_id)
+    await Manager.push_data(NewOrder.new_hookah, cart, "cart")
+
+    markup = await order_keyboars.show_cart_keyboard(cart)
+
+    await query.message.edit_text("Cart", reply_markup = markup)
+
+@orders_router.callback_query(StateFilter(NewOrder.open_cart), OrderNavigateCallback.filter(F.action == "edit"))
+async def orders_edit_from_cart(query: CallbackQuery, Manager: Manager, callback_data: OrderNavigateCallback):
+    await query.answer()
+    cart = await Manager.get_data("cart", NewOrder.new_hookah)
+
+    data = {
+        "current_tabacco":callback_data.tabacco_id,
+        "current_num":cart[callback_data.tabacco_id].get("used_weight")
+    }
     
-    bill_keyboards.update(data = await Bills.get_all_bills({"is_closed":False}))    
+    await Manager.push(NewOrder.edit_weight.state, data = data)
 
-    markup = await bill_keyboards.bills_list()
+    markup = order_keyboars.show_num_keyboard(current_num = data.get("current_num")) #noqa
 
-    logging.log(30, f"Closed bill {bill.bill_name}. Crerated by {bill.created_by}. Closed by {query.from_user.id}")
-    await query.message.edit_text("Bill", reply_markup = markup)
-
+    await query.message.edit_text("Input weight", reply_markup = markup) #noqa
 
 
-@orders_router.callback_query(OrderNavigateCallback.filter(F.action == "add_new_order"))
-async def orders_new_order(query: CallbackQuery, state: FSMContext):
-    await query.answer()
-    data = await state.get_data()
-    await state.set_state(EditBill.new_order)
-    await state.update_data(data)
+@orders_router.callback_query(StateFilter(NewOrder.edit_weight), NumKeyboardCallback.filter(F.action == "commit"))
+async def orders_commit_edit_tabacco(query: CallbackQuery, Manager: Manager):
+    current_tabacco = await Manager.get_data("current_tabacco")
+    used_weight =  await Manager.get_data("current_num")
+    if used_weight == 0:
+        await query.answer(text = "Weight can't be zero", show_alert = True)
+        return
 
-    markup = bill_keyboards.new_order(data.get("bill_id"))
-
-    await query.message.edit_text("New order", reply_markup = markup)
-
-
-bill_keyboards.register_handler(bill_keyboards.navigate_choose_page_slider, [EditBill.new_order, NavigatePageKeyboard.filter(F.action.in_(["first", "last", "prev","next","redraw"]))])
-bill_keyboards.register_handler(bill_keyboards.navigate_page_num_keyboard, [EditBill.new_order, NumKeyboardCallback.filter(F.action.not_in(["commit"]))])
-@orders_router.callback_query(EditBill.new_order, OrderNavigateCallback.filter(F.action == "hookah"))
-async def orders_select_type(query: CallbackQuery, state: FSMContext):
-    await query.answer()
-    await state.update_data({"cart":{}})
-    data = await state.get_data()
-
-    bill_keyboards.update(data = await Tabacco.get_all())
-
-    markup = bill_keyboards.choose_tabacco(cart = data.get("cart"), bill_id = data.get("bill_id"))
-
-    await query.message.edit_text("New order", reply_markup = markup)
-
-@orders_router.callback_query(EditBill.new_order, NavigatePageKeyboard.filter(F.action == "choose_tabacco"))
-async def orders_choose_tabacco(query: CallbackQuery, state: FSMContext, callback_data: NavigatePageKeyboard):
-    await query.answer()
-    current_tabacco = await Tabacco.get_by_id(callback_data.kwargs)
-    await state.update_data({"current_tabacco":current_tabacco.to_dict()})
-    await state.update_data({"current_num":0})
-
-    markup = bill_keyboards.show_num_keyboard()
-
-    await query.message.edit_text("Input weight", reply_markup = markup)
-
-@orders_router.callback_query(EditBill.new_order, OrderNavigateCallback.filter(F.action == "open_cart"))
-async def orders_show_cart(query: CallbackQuery, state: FSMContext):
     await query.answer()
 
-    data = await state.get_data()
-    cart = data.get("cart")
-    logging.log(30, data)
-    markup = bill_keyboards.show_cart_keyboard(cart)
+    data = {
+        current_tabacco:{"used_weight": used_weight}
+    }
 
-    await query.message.edit_text("Cart", reply_markup = markup)
+    cart = await Manager.get_data("cart", NewOrder.new_hookah)
+    cart[current_tabacco] = {"used_weight":used_weight}
 
-@orders_router.callback_query(EditBill.new_order, OrderNavigateCallback.filter(F.action == "remove"))
-async def orders_remove_from_cart(query: CallbackQuery, state: FSMContext, callback_data: OrderNavigateCallback):
+    await Manager.push_data(NewOrder.new_hookah, data, "cart")
+    await Manager.goto(NewOrder.open_cart)
+
+    markup = await order_keyboars.show_cart_keyboard(cart = cart)
+
+    await query.message.edit_text(text = "Cart", reply_markup = markup)
+
+@orders_router.callback_query(StateFilter(NewOrder.new_hookah), OrderNavigateCallback.filter(F.action == "commit_mix"))
+async def orders_commit_cart(query: CallbackQuery, Manager: Manager):
+    cart = await Manager.get_data("cart")
+    if not cart:
+        await query.answer(text = "Cart can't be empty", show_alert = True)
+        return
+
     await query.answer()
-
-    data = await state.get_data()
-    cart = data.get("cart")
-    cart.pop(callback_data.bill_id)
-
-    await state.update_data(cart)
-
-    markup = bill_keyboards.show_cart_keyboard(cart)
-
-    await query.message.edit_text("Cart", reply_markup = markup)
-
-@orders_router.callback_query(EditBill.new_order, OrderNavigateCallback.filter(F.action == "edit"))
-async def orders_edit_from_cart(query: CallbackQuery, state: FSMContext, callback_data: OrderNavigateCallback):
-    await query.answer()
-    data = await state.get_data()
-    cart = data.get("cart")
-
-    current_tabacco = cart[callback_data.bill_id]
-    await state.update_data({"current_tabacco":current_tabacco})
-    await state.update_data({"current_num":current_tabacco.get("used_weight")})
-
-    markup = bill_keyboards.show_num_keyboard(current_num = current_tabacco.get("used_weight"))
-
-    await query.message.edit_text("Input weight", reply_markup = markup)
-
-@orders_router.callback_query(EditBill.new_order, NumKeyboardCallback.filter(F.action == "commit"))
-async def orders_update_choosed_tabacco(query: CallbackQuery, state: FSMContext, callback_data: NavigatePageKeyboard):
-    await query.answer()
-
-    data = await state.get_data()
-    current_tabacco, current_number = data.get("current_tabacco"), data.get("current_num")
-    current_tabacco["used_weight"] = current_number
-
-    cart = data.get("cart")
-    cart.update({current_tabacco.get("_id"):current_tabacco})
-    await state.update_data({"cart":cart})
-
-    logging.log(30, cart)
-
-    markup = bill_keyboards.choose_tabacco(cart = cart, bill_id = data.get("bill_id"))
-
-    await query.message.edit_text("Choose tabacco", reply_markup = markup)
-
-@orders_router.callback_query(EditBill.new_order, OrderNavigateCallback.filter(F.action == "commit_mix"))
-async def orders_commit_cart(query: CallbackQuery, state: FSMContext, callback_data: OrderNavigateCallback):
-    await query.answer()
-
-    markup = bill_keyboards.show_choose_cost()
+    await Manager.push(NewOrder.choose_cost.state)
+    markup = order_keyboars.show_choose_cost()
 
     await query.message.edit_text("Choose price", reply_markup = markup)
 
-@orders_router.callback_query(EditBill.new_order, OrderNavigateCallback.filter(F.action == "cost"))
-async def orders_commit_cost(query: CallbackQuery, state: FSMContext, callback_data: OrderNavigateCallback):
+@orders_router.callback_query(StateFilter(NewOrder.choose_cost), OrderNavigateCallback.filter(F.action == "cost"))
+async def orders_commit_cost(query: CallbackQuery, Manager: Manager, callback_data: OrderNavigateCallback):
     await query.answer()
 
-    cost = callback_data.bill_id
-    data = await state.get_data()
-    await state.update_data({"cart":{}})
-    cart = data.get("cart")
-    bill_id = data.get("bill_id")
-    
+    cost = callback_data.cost
+    cart = await Manager.get_data("cart", NewOrder.new_hookah)
+    bill_id = await Manager.get_data("bill_id", BillStates.open_bill)
+
     order_id = await Order.create_order("Shisha", query.from_user.id, [{key:value.get("used_weight")} for key, value in cart.items()], cost)
     await Bills.update_orders(bill_id, order_id)
 
-    markup = await bill_keyboards.open_bill(await Bills.get_bill(bill_id), data.get("current_page"))
+    await Manager.goto(BillStates.open_bill)
 
-    await query.message.edit_text("Bill", reply_markup = markup)
+    markup = await order_keyboars.open_bill(await Bills.get_bill(bill_id))
+
+    await query.message.edit_text("Bill", reply_markup = markup) #noqa
+
+
+
+@orders_router.callback_query(StateFilter(BillStates.open_bill), OrderNavigateCallback.filter(F.action == "open_order"))
+async def orders_open_order(query: CallbackQuery, Manager: Manager, callback_data: OrderNavigateCallback):
+    await query.answer()
+    order_id = callback_data.order_id
+    await Manager.push(BillStates.edit_order.state, {"order_id":order_id})
+
+    markup = await order_keyboars.show_order_keyboard(order_id = order_id)
+
+    await query.message.edit_text("Edit order", reply_markup = markup)  
+
+
+@orders_router.callback_query(StateFilter(BillStates.edit_order), OrderNavigateCallback.filter(F.action == "remove_order"))
+async def orders_remove_order(query: CallbackQuery, Manager: Manager):
+    await query.answer()
+    bill_id = await Manager.get_data("bill_id", BillStates.open_bill)
+    order_id = await Manager.get_data("order_id")
+    await Manager.goto(BillStates.open_bill)
+
+    await Bills.remove_order(bill_id, order_id)
+
+    markup = await order_keyboars.open_bill(await Bills.get_bill(bill_id))
+    await query.message.edit_text("Open bill", reply_markup = markup)
+
+
+@orders_router.callback_query(StateFilter(BillStates.edit_order), OrderNavigateCallback.filter(F.action == "discount_order"))
+async def orders_discount_order():
+    pass
+
+@orders_router.callback_query(StateFilter(BillStates.edit_order), OrderNavigateCallback.filter(F.action == "save_mix"))
+async def orders_save_mix():
+    pass
+
+
+#back
+
+@orders_router.callback_query(StateFilter(NewOrder, BillStates), OrderNavigateCallback.filter(F.action == "back"))
+async def back(query: CallbackQuery, Manager: Manager, state: FSMContext):
+    await query.answer()
+    await Manager.pop()
+
+    _state_record = await Manager.get()
+
+    await state.set_state(_state_record.state)
+
+    cart = await Manager.get_data("cart") if await Manager.get_data("cart") else {}
+    bill_id = await Manager.get_data("bill_id") if await Manager.get_data("bill_id") else None
+    markups = {
+        "BillStates:open_bill":await order_keyboars.open_bill(await Bills.get_bill(bill_id)) if bill_id else None,
+        "NewOrder:new_order":order_keyboars.new_order(),
+        "NewOrder:new_hookah":order_keyboars.choose_tabacco(cart = cart),
+        "NewOrder:open_cart":await order_keyboars.show_cart_keyboard(cart = cart)
+    }
+
+    reply_text = {
+        "BillStates:open_bill":"Bill",
+        "NewOrder:new_order":"New order",
+        "NewOrder:new_hookah":"Choose tabacco",
+        "NewOrder:open_cart":"Cart",
+    }
+
+    text = reply_text.get(_state_record.state)
+    markup = markups.get(_state_record.state)
+    await query.message.edit_text(text = text, reply_markup = markup)

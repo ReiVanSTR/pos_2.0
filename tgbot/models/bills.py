@@ -1,7 +1,7 @@
 from datetime import datetime
 from dataclasses import dataclass
 from pydantic import Field
-from typing import List
+from typing import List, Union
 from .basic import ObjectId, Basic
 
 
@@ -13,6 +13,7 @@ class BillData():
     timestamp: datetime
     orders: List[ObjectId] #orders id
     is_closed: bool
+    payment_method: str
     opened_by: List
     edited_by: List
 
@@ -23,6 +24,7 @@ class Bills(Basic):
     timestamp: datetime
     orders: List[ObjectId] #orders id
     is_closed: bool
+    payment_method: str
     opened_by: List
     edited_by: List
 
@@ -34,6 +36,7 @@ class Bills(Basic):
             "timestamp": datetime.utcnow(),
             "orders": [],
             "is_closed": False,
+            "payment_method":"cash",
             "opened_by": [],
             "edited_by": []
         }
@@ -54,7 +57,9 @@ class Bills(Basic):
     
     @classmethod
     async def get_bill(cls, bill_id: str):
-        return BillData(**await cls._collection.find_one({"_id":ObjectId(bill_id)}))
+        if isinstance(bill_id, str):
+            bill_id = ObjectId(bill_id)
+        return BillData(**await cls._collection.find_one({"_id":bill_id}))
 
     @classmethod
     async def update_orders(cls, bill_id: ObjectId, order_id):
@@ -63,11 +68,21 @@ class Bills(Basic):
         await cls._collection.update_one({"_id":bill_id}, {"$push":{"orders":order_id}}, upsert = True)
 
     @classmethod
-    async def close_bill(cls, bill_id: ObjectId):
+    async def remove_order(cls, bill_id: Union[ObjectId, str], order_id: Union[ObjectId, str]):
         if isinstance(bill_id, str):
             bill_id = ObjectId(bill_id)
 
-        await cls._collection.update_one({"_id":bill_id}, {"$set":{"is_closed":True}})
+        if isinstance(order_id, str):
+            order_id = ObjectId(order_id)
+
+        await cls._collection.update_one({"_id":bill_id}, {"$pull":{"orders":order_id}}, upsert = True)
+
+    @classmethod
+    async def close_bill(cls, bill_id: ObjectId, payment_method: str):
+        if isinstance(bill_id, str):
+            bill_id = ObjectId(bill_id)
+
+        await cls._collection.update_one({"_id":bill_id}, {"$set":{"is_closed":True, "payment_method":payment_method}})
 
     
 

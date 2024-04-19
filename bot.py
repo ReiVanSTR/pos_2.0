@@ -16,6 +16,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from tgbot.config import load_config, Config
 from tgbot.handlers import routers_list
 from tgbot.middlewares.config import ConfigMiddleware
+from tgbot.middlewares.user import UserMiddleware
 from tgbot.services import broadcaster
 
 
@@ -33,7 +34,7 @@ def register_global_middlewares(dp: Dispatcher, config: Config, session_pool=Non
     """
     middleware_types = [
         ConfigMiddleware(config),
-        # DatabaseMiddleware(session_pool),
+        UserMiddleware(),
     ]
 
     for middleware_type in middleware_types:
@@ -79,6 +80,7 @@ def get_storage(config):
 
     """
     if config.tg_bot.use_redis:
+        logging.log(30, config.redis.dsn())
         return RedisStorage.from_url(
             config.redis.dsn(),
             key_builder=DefaultKeyBuilder(with_bot_id=True, with_destiny=True),
