@@ -1,0 +1,32 @@
+<!--
+    Simple static Telegram WebApp. Does not verify the WebAppInitData, as a bot token would be needed for that.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>python-telegram-bot Example WebApp</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body style="background-color: #ffffff">
+<div style="position: absolute; margin-top: 5vh; margin-left: 5vw; height: 90vh; width: 90vw; border-radius: 5vh; background-color: var(--tg-theme-bg-color); box-shadow: 0 0 2vw #000000;">
+    <div id="picker" style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%"></div>
+    <input type="text" id="inputText" placeholder="Enter text here" style="margin-top: 20px; margin-left: 20px;">
+</div>
+
+<script type="text/javascript">
+    Telegram.WebApp.ready();
+
+    // Main button click event
+    Telegram.WebApp.MainButton.setText('Create table').show().onClick(function () {
+        const inputData = document.getElementById('inputText').value;
+        const data = JSON.stringify({input: inputData});
+        Telegram.WebApp.sendData(data);
+        Telegram.WebApp.close();
+    });
+
+    // Expand WebApp
+    Telegram.WebApp.expand();
+</script>
+</body>
+</html>

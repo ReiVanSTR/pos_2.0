@@ -1,12 +1,13 @@
 import asyncio
 import logging
+import sys
+import os
 
 import betterlogging as bl
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 
-from aiogram.client.session.aiohttp import AiohttpSession
 
 # session = AiohttpSession(proxy={
 #        'http': 'proxy.server:3128',
@@ -17,7 +18,13 @@ from tgbot.config import load_config, Config
 from tgbot.handlers import routers_list
 from tgbot.middlewares.config import ConfigMiddleware
 from tgbot.middlewares.user import UserMiddleware
-from tgbot.services import broadcaster
+from tgbot.services.db_observer.loader import start_observers, observers
+from cachetools import TTLCache
+from tgbot.misc.cache import _cache
+
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
 
 
 
@@ -65,7 +72,7 @@ def setup_logging():
         format="%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s",
     )
     logger = logging.getLogger(__name__)
-    logger.info("Starting bot")
+    logger.info("Logging configurated")
 
 
 def get_storage(config):
@@ -89,11 +96,26 @@ def get_storage(config):
         return MemoryStorage()
 
 
+def restart_bot():
+    logging.info("Перезапуск бота...")
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
+    
+
+class MyFileSystemEventHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        if event.src_path.endswith(".py"):  # Можно настроить фильтр на конкретные файлы, если нужно
+            logging.info("Обнаружено изменение в коде. Перезапуск бота...")
+            restart_bot()
+
+
 async def main():
     setup_logging()
 
+
     config = load_config(".env")
     storage = get_storage(config)
+    cache = _cache
 
     bot = Bot(token=config.tg_bot.token, parse_mode="HTML")
     dp = Dispatcher(storage=storage)
@@ -101,11 +123,28 @@ async def main():
     dp.include_routers(*routers_list)
 
     register_global_middlewares(dp, config)
-    await dp.start_polling(bot, Session = "test")
+    
+    await asyncio.gather(
+        dp.start_polling(bot, cache = cache),
+        start_observers(cache)
+    )
+   
 
 
 if __name__ == "__main__":
+    config = load_config(".env")
+    if config.tg_bot.dev_mode:
+        path_to_watch = 'tgbot'
+        event_handler = MyFileSystemEventHandler()
+        observer = Observer()
+        observer.schedule(event_handler, path=path_to_watch, recursive=True)
+        observer.start()
+
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        logging.error("Бот був вимкнений!")
+        logging.error("Bot stopped")
+
+    if config.tg_bot.dev_mode:
+        observer.stop()
+        observer.join()

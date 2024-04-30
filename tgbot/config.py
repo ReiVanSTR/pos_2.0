@@ -76,6 +76,7 @@ class TgBot:
     token: str
     admin_ids: list
     use_redis: bool
+    dev_mode: bool
 
     @staticmethod
     def from_env(env: Env):
@@ -85,7 +86,8 @@ class TgBot:
         token = env.str("BOT_TOKEN")
         admin_ids = list(map(int, env.list("ADMINS")))
         use_redis = env.bool("USE_REDIS")
-        return TgBot(token=token, admin_ids=admin_ids, use_redis=use_redis)
+        dev_mode = env.bool("DEV_MODE")
+        return TgBot(token=token, admin_ids=admin_ids, use_redis=use_redis, dev_mode=dev_mode)
 
 
 @dataclass

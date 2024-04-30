@@ -55,7 +55,7 @@ class OrderKeyboards(BasicPageGenerator):
         operation_keyboard.button(text = "Close bill",
                         callback_data = BillsNavigate(action = "close_bill"))
         operation_keyboard.button(text = "Options",
-                        callback_data = OrderNavigateCallback(action = "options", bill_id = bill._id.__str__()))
+                        callback_data = BillsNavigate(action = "options"))
         
         keyboard.row(*operation_keyboard.buttons, width = 2)
 
@@ -111,7 +111,7 @@ class OrderKeyboards(BasicPageGenerator):
         return keyboard.as_markup()
 
     async def navigate_page_num_keyboard(self, query: CallbackQuery, callback_data: NumKeyboardCallback, Manager: Manager):
-        await query.answer()
+        await query.answer(cache_time=1)
 
         if callback_data.action == "clear":
             await Manager.update_data("current_num", 0)
@@ -177,6 +177,7 @@ class OrderKeyboards(BasicPageGenerator):
 
     async def show_order_keyboard(self, order_id: str):
         keyboard = InlineKeyboardBuilder()
+
         order = await Order.get_order(order_id = order_id)
         user = await User.get_user_by_user_id(order.created_by)
         keyboard.button(

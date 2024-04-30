@@ -3,7 +3,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.filters import StateFilter
-from typing import Union
+from ..misc.cache import Cache
 
 from ..misc.history_manager import Manager
 from ..keyboards.orders import OrderKeyboards
@@ -26,48 +26,49 @@ order_keyboars.register_handler(order_keyboars.navigate_page_num_keyboard, [NewO
 
 
 @orders_router.callback_query(StateFilter(BillStates.bills_list), OrderNavigateCallback.filter(F.action == "open_bill"))
-async def orders_open_bill(query: CallbackQuery, state: FSMContext, callback_data: OrderNavigateCallback, Manager: Manager):
+async def orders_open_bill(query: CallbackQuery, cache: Cache, callback_data: OrderNavigateCallback, Manager: Manager):
     await query.answer()
-    await Manager.push(BillStates.open_bill.state, {"bill_id":callback_data.bill_id})
-   
-    markup = await order_keyboars.open_bill(await Bills.get_bill(callback_data.bill_id))
+
+    markup = await order_keyboars.open_bill(await cache.getBill(callback_data.bill_id))
 
     await query.message.edit_text("Bill", reply_markup = markup)
+
+    await Manager.push(BillStates.open_bill.state, {"bill_id":callback_data.bill_id})
 
 
 
 @orders_router.callback_query(StateFilter(BillStates.open_bill), OrderNavigateCallback.filter(F.action == "add_new_order"))
 async def orders_new_order(query: CallbackQuery, state: FSMContext, Manager: Manager):
     await query.answer()
-    await Manager.push(state = NewOrder.new_order.state)
 
     markup = order_keyboars.new_order()
+    await query.message.edit_text("New order", reply_markup = markup) #noqa
 
-    await query.message.edit_text("New order", reply_markup = markup)
+    await Manager.push(state = NewOrder.new_order.state)
 
 
 @orders_router.callback_query(StateFilter(NewOrder.new_order), OrderNavigateCallback.filter(F.action == "hookah"))
-async def orders_select_type(query: CallbackQuery, state: FSMContext, Manager: Manager):
+async def orders_select_type(query: CallbackQuery, state: FSMContext, Manager: Manager, cache: Cache):
     await query.answer()
-    await Manager.push(state = NewOrder.new_hookah.state, data={"cart":{}, "current_page":1}, push = True)
-    await state.set_state(NewOrder.new_hookah)
-
     cart = await Manager.get_data("cart")
-    order_keyboars.update(data = await Tabacco.get_all())
+    order_keyboars.update(data = await cache.getAllTabacco())
 
     markup = order_keyboars.choose_tabacco(cart = cart)
-
     await query.message.edit_text("New order", reply_markup = markup)
+
+    await Manager.push(state = NewOrder.new_hookah.state, data={"cart":{}, "current_page":1}, push = True)
+    await state.set_state(NewOrder.new_hookah)
 
 
 @orders_router.callback_query(StateFilter(NewOrder.new_hookah), OrderNavigateCallback.filter(F.action == "choose_tabacco"))
 async def orders_choose_tabacco(query: CallbackQuery, Manager: Manager, callback_data: OrderNavigateCallback):
     await query.answer()
+
+    markup = order_keyboars.show_num_keyboard()
+    await query.message.edit_text("Input weight", reply_markup = markup)
+
     current_tabacco = await Tabacco.get_by_id(callback_data.tabacco_id)
     await Manager.push(state = NewOrder.choose_tabacco.state, data = {"current_tabacco":current_tabacco.to_dict(),"current_num":0})
-    markup = order_keyboars.show_num_keyboard()
-
-    await query.message.edit_text("Input weight", reply_markup = markup)
 
 
 @orders_router.callback_query(StateFilter(NewOrder.choose_tabacco), NumKeyboardCallback.filter(F.action == "commit"))
@@ -79,6 +80,10 @@ async def orders_commit_choose_tabacco(query: CallbackQuery, Manager: Manager):
         return
 
     await query.answer()
+    cart = await Manager.get_data("cart")
+    markup = order_keyboars.choose_tabacco(cart = cart)
+
+    await query.message.edit_text(text = "Choose tabacco", reply_markup = markup)
 
     data = {
         current_tabacco.get("_id"):{"used_weight": used_weight}
@@ -86,19 +91,15 @@ async def orders_commit_choose_tabacco(query: CallbackQuery, Manager: Manager):
     await Manager.push_data(NewOrder.new_hookah, data, "cart", True)
     await Manager.goto(NewOrder.new_hookah)
 
-    cart = await Manager.get_data("cart")
-    markup = order_keyboars.choose_tabacco(cart = cart)
-
-    await query.message.edit_text(text = "Choose tabacco", reply_markup = markup)
 
 @orders_router.callback_query(StateFilter(NewOrder.new_hookah), OrderNavigateCallback.filter(F.action == "open_cart"))
 async def orders_show_cart(query: CallbackQuery, state: FSMContext, Manager: Manager):
     await query.answer()
     cart = await Manager.get_data("cart")
-    await Manager.push(NewOrder.open_cart.state)
     markup = await order_keyboars.show_cart_keyboard(cart)
-
     await query.message.edit_text("Cart", reply_markup = markup)
+    
+    await Manager.push(NewOrder.open_cart.state)
 
 
 @orders_router.callback_query(StateFilter(NewOrder.open_cart), OrderNavigateCallback.filter(F.action == "remove"))

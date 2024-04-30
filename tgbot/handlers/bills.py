@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters import StateFilter
 
 from ..misc.history_manager import Manager
+from ..misc.cache import Cache
 
 from ..misc.states import BillStates, MenuStates, FormNewBill
 from ..keyboards.pager import NavigatePageKeyboard
@@ -27,20 +28,22 @@ keyboards.register_handler(keyboards.navigate_page_slider, [BillStates.bills_lis
 @bills_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "bills"))
 async def show_bills_menu(query: CallbackQuery, state: FSMContext, Manager: Manager):
     await query.answer()
-    await state.set_state(BillStates.bills_menu)
+
+    markup = keyboards.bills_menu()
+    await query.message.edit_text("Bills Menu", reply_markup = markup)
+
+
     await Manager.push(BillStates.bills_menu.state, {})
 
 
-    markup = keyboards.bills_menu()
-    await query.message.edit_text("Test", reply_markup = markup)
-
 @bills_router.callback_query(StateFilter(BillStates.bills_menu), BillsNavigate.filter(F.action == "bills_list"))
-async def show_bills_list(query: CallbackQuery, state: FSMContext, Manager: Manager):
+async def show_bills_list(query: CallbackQuery, state: FSMContext, Manager: Manager, cache: Cache):
     await query.answer()
     await Manager.push(BillStates.bills_list.state, {"current_page":1})
     await state.set_state(BillStates.bills_list)
 
-    keyboards.update(data = await Bills.get_all_bills({"is_closed":False}))
+    
+    keyboards.update(data = await cache.getAllBills(filter = {"is_closed":False}))
     markup = await keyboards.bills_list()
 
     await query.message.edit_text("Bills list", reply_markup = markup)
@@ -88,11 +91,33 @@ async def orders_choose_payment_method(query: CallbackQuery, Manager: Manager):
         return
     
     await query.answer()
-    await Manager.push(BillStates.close_bill.state)
+    await Manager.push(BillStates.close_bill.state, push=True)
 
     markup = keyboards.show_paymant_keyboard()
     
     await query.message.edit_text(text = "Choose payment method", reply_markup = markup)
+
+@bills_router.callback_query(StateFilter(BillStates.options), BillsNavigate.filter(F.action == "delete_bill"))
+async def delete_bill(query: CallbackQuery, Manager: Manager, cache: Cache):
+    await query.answer()
+    bill_id = await Manager.get_data("bill_id")
+    await Bills.delete_bill(bill_id=bill_id)
+    await Manager.goto(BillStates.bills_list)
+    
+
+    keyboards.update(data = await cache.getAllBills(filter = {"is_closed":False}, update = True))
+    markup = await keyboards.bills_list()
+
+    await query.message.edit_text(text = "Bills list", reply_markup = markup)
+
+
+@bills_router.callback_query(StateFilter(BillStates.open_bill), BillsNavigate.filter(F.action == "options"))
+async def show_bill_options(query: CallbackQuery, Manager: Manager):
+    await query.answer()
+    await Manager.push(BillStates.options.state, push = True)
+
+    markup = keyboards.show_options()
+    await query.message.edit_text(text = "Options", reply_markup = markup)
 # 
 @bills_router.callback_query(StateFilter(BillStates.close_bill), BillsNavigate.filter(F.action.in_(["card", "cash", "chief"])))
 async def orders_close_bill(query: CallbackQuery, Manager: Manager, callback_data: BillsNavigate):
@@ -122,21 +147,22 @@ async def orders_close_bill(query: CallbackQuery, Manager: Manager, callback_dat
 
 #back
 @bills_router.callback_query(BillsNavigate.filter(F.action == "back"))
-async def back_to_menu(query: CallbackQuery, state: FSMContext, user: UserData, Manager: Manager):
+async def back_to_menu(query: CallbackQuery, state: FSMContext, user: UserData, Manager: Manager, cache: Cache):
     await query.answer()
     await Manager.pop()
-
     _state_record = await Manager.get()
 
     await state.set_state(_state_record.state)
     bill_id = await Manager.get_data("bill_id")
+    
+
 
     markups = {
         "MenuStates:menu":await MenuKeyboards().menu_keyboard(user = user),
         "BillStates:bills_menu":keyboards.bills_menu(),
         "BillStates:bills_list":await keyboards.bills_list(),
         "FormNewBill:input_name":keyboards.new_bill_cancel(),
-        "BillStates:open_bill":await keyboards.open_bill(await Bills.get_bill(bill_id)) if bill_id else None
+        "BillStates:open_bill":await keyboards.open_bill(await cache.getBill(bill_id)) if bill_id else None
     }
 
     reply_text = {

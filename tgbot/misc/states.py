@@ -32,6 +32,7 @@ class BillStates(StatesGroup):
     open_bill = State()
     close_bill = State()
     new_bill = State()
+    options = State()
 
     edit_order = State()
 

@@ -108,7 +108,7 @@ class BillKeyboards(BasicPageGenerator):
         operation_keyboard.button(text = "Close bill",
                         callback_data = BillsNavigate(action = "close_bill"))
         operation_keyboard.button(text = "Options",
-                        callback_data = OrderNavigateCallback(action = "options", bill_id = bill._id.__str__()))
+                        callback_data = BillsNavigate(action = "options", bill_id = bill._id.__str__()))
         
         keyboard.row(*operation_keyboard.buttons, width = 2)
 
@@ -131,4 +131,15 @@ class BillKeyboards(BasicPageGenerator):
         keyboard.adjust(2,1)
         keyboard.attach(InlineKeyboardBuilder().button(text = "Cancel", callback_data = BillsNavigate(action = "back")))
 
+        return keyboard.as_markup()
+    
+    def show_options(self):
+        keyboard = InlineKeyboardBuilder()
+        keyboard.button(
+            text = "Delete bill", callback_data = BillsNavigate(action = "delete_bill", permissions = "Admin")
+        )
+        keyboard.button(
+            text = "Hand over bill", callback_data = BillsNavigate(action = "hand_over_bill")
+        )
+        keyboard.attach(InlineKeyboardBuilder().button(text = "Cancel", callback_data = BillsNavigate(action = "back")))
         return keyboard.as_markup()

@@ -6,6 +6,7 @@ from pydantic import Field
 
 class BillsNavigate(CallbackData, prefix = "bills"):
     action: str
+    permissions: Optional[str] = Field(default="")
 
 class BillsCommit(CallbackData, prefix = "orders_commit"):
     commit: str #yes, nope

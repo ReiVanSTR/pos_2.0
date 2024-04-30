@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from pydantic import Field
 from typing import List, Union
 from .basic import ObjectId, Basic
+import logging
 
 
 @dataclass
@@ -84,6 +85,13 @@ class Bills(Basic):
 
         await cls._collection.update_one({"_id":bill_id}, {"$set":{"is_closed":True, "payment_method":payment_method}})
 
+    @classmethod
+    async def delete_bill(self, bill_id: ObjectId):
+        if isinstance(bill_id, str):
+            bill_id = ObjectId(bill_id)
+
+        result = await self._collection.delete_one({"_id":bill_id})
+        logging.log(30, result)
     
 
 Bills.set_collection('bills')
