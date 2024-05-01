@@ -33,6 +33,11 @@
         Telegram.WebApp.close();
     });
 
+    window.Telegram.WebApp.onEvent('mainButtonClicked', function(){
+        window.Telegram.WebApp.sendData("some string that we need to send"); 
+	//при клике на основную кнопку отправляем данные в строковом виде
+});
+
     // Expand WebApp
     Telegram.WebApp.expand();
 </script>
