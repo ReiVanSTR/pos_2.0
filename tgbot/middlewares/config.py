@@ -1,3 +1,4 @@
+import logging
 from typing import Callable, Dict, Any, Awaitable
 
 from aiogram import BaseMiddleware
@@ -15,4 +16,5 @@ class ConfigMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         data["config"] = self.config
+        logging.log(30, data["update"])
         return await handler(event, data)
