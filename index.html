@@ -20,7 +20,7 @@
     Telegram.WebApp.MainButton.setText('Create table').show().onClick(function () {
         const inputData = document.getElementById('inputText').value;
         const data = JSON.stringify({input: inputData});
-        Telegram.WebApp.sendData(data);
+        window.Telegram.WebApp.sendData(data);
         Telegram.WebApp.close();
     });
 
