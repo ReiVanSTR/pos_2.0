@@ -29,7 +29,7 @@
     // Main button click event
     Telegram.WebApp.MainButton.setText('Create table').show().onClick(function () {
         const inputData = document.getElementById('inputText').value;
-        window.Telegram.WebApp.sendData(inputData);
+        Telegram.WebApp.sendData(inputData);
         Telegram.WebApp.close();
     });
 
