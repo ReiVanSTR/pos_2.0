@@ -37,13 +37,12 @@ async def show_bills_menu(query: CallbackQuery, state: FSMContext, Manager: Mana
 
 
 @bills_router.callback_query(StateFilter(BillStates.bills_menu), BillsNavigate.filter(F.action == "bills_list"))
-async def show_bills_list(query: CallbackQuery, state: FSMContext, Manager: Manager, cache: Cache):
+async def show_bills_list(query: CallbackQuery, Manager: Manager, cache: Cache):
     await query.answer()
     await Manager.push(BillStates.bills_list.state, {"current_page":1})
-    await state.set_state(BillStates.bills_list)
 
     
-    keyboards.update(data = await cache.getAllBills(filter = {"is_closed":False}))
+    keyboards.update(data = await cache.getAllBills(filter = {"is_closed":False}, update = True))
     markup = await keyboards.bills_list()
 
     await query.message.edit_text("Bills list", reply_markup = markup)
@@ -51,21 +50,25 @@ async def show_bills_list(query: CallbackQuery, state: FSMContext, Manager: Mana
 @bills_router.callback_query(StateFilter(BillStates.bills_menu), BillsNavigate.filter(F.action == "new_bill"))
 async def form_new_bill(query: CallbackQuery, state: FSMContext, Manager: Manager):
     await query.answer()
-    await state.set_state(FormNewBill.input_name)
     await Manager.push(FormNewBill.input_name.state, {})
 
     markup = keyboards.new_bill_cancel()
-    await query.message.edit_text("Input bill name:", reply_markup = markup)
+    await query.message.edit_text("Input bill name:", reply_markup = markup) #noqa: Y
+
+    global last_query
+    last_query = query
+    
+
 
 @bills_router.message(StateFilter(FormNewBill.input_name), F.text.is_not(None))
 async def form_input_name(message: Message, state: FSMContext, Manager: Manager):
-    await state.set_state(FormNewBill.confirm)
     await Manager.push(FormNewBill.confirm.state, {"bill_name": message.text.strip()})
 
     markup = keyboards.bills_commit()
 
+    await last_query.message.edit_text(f"Confirm {message.text.strip()}", reply_markup = markup)
+    await message.delete()
 
-    await message.answer("Confirm", reply_markup = markup)
 
 
 @bills_router.callback_query(StateFilter(FormNewBill.confirm), BillsNavigate.filter(F.action == "yes"))

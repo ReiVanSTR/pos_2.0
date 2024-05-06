@@ -32,7 +32,8 @@ async def user_start(message: Message, user: UserData, state:FSMContext, History
 #     markup = await menu_keyboards.menu_keyboard(user = user)
 #     await message.answer(f"Hello, {user.username}", reply_markup = markup)
 
-# @menu_router.
-# async def catch(update: Update):
-#     logging.log(30, update)
-#     logging.log(30, update)
+@menu_router.message(F.message.via_bot)
+async def catch(message: Message):
+    logging.log(30, message)
+
+

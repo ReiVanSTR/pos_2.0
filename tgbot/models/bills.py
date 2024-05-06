@@ -86,12 +86,11 @@ class Bills(Basic):
         await cls._collection.update_one({"_id":bill_id}, {"$set":{"is_closed":True, "payment_method":payment_method}})
 
     @classmethod
-    async def delete_bill(self, bill_id: ObjectId):
+    async def delete_bill(cls, bill_id: ObjectId):
         if isinstance(bill_id, str):
             bill_id = ObjectId(bill_id)
 
-        result = await self._collection.delete_one({"_id":bill_id})
-        logging.log(30, result)
+        await cls._collection.delete_one({"_id":bill_id})
     
 
 Bills.set_collection('bills')

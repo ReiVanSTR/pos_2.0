@@ -12,10 +12,10 @@ async def track_changes(cache: Cache):
         async for change in stream:
             change = Change(**change)
             
-            # if change.operationType in ["insert", "delete"]:
-            #     logging.info("Updated cache")
-            #     await cache.getAllBills(filter = {"is_closed": False})
+            if change.operationType in ["insert", "delete"]:
+                logging.info("Updated cache")
+                await cache.getAllBills(filter = {"is_closed": False})
 
-            # if change.operationType in ["update"]:
-            #     logging.info("Updated cache")
-            #     await cache.getAllBills(filter = {"is_closed": False})
+            if change.operationType in ["update"]:
+                logging.info("Updated cache")
+                await cache.getAllBills(filter = {"is_closed": False})

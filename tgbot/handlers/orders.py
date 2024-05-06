@@ -75,21 +75,25 @@ async def orders_choose_tabacco(query: CallbackQuery, Manager: Manager, callback
 async def orders_commit_choose_tabacco(query: CallbackQuery, Manager: Manager):
     current_tabacco = await Manager.get_data("current_tabacco")
     used_weight =  await Manager.get_data("current_num")
+    data = {
+        current_tabacco.get("_id"):{"used_weight": used_weight}
+    }
+
     if used_weight == 0:
         await query.answer(text = "Weight can't be zero", show_alert = True)
         return
-
+    
     await query.answer()
+    await Manager.push_data(NewOrder.new_hookah, data, "cart", True)
+    await Manager.goto(NewOrder.new_hookah)
     cart = await Manager.get_data("cart")
+
     markup = order_keyboars.choose_tabacco(cart = cart)
 
     await query.message.edit_text(text = "Choose tabacco", reply_markup = markup)
 
-    data = {
-        current_tabacco.get("_id"):{"used_weight": used_weight}
-    }
-    await Manager.push_data(NewOrder.new_hookah, data, "cart", True)
-    await Manager.goto(NewOrder.new_hookah)
+    
+    
 
 
 @orders_router.callback_query(StateFilter(NewOrder.new_hookah), OrderNavigateCallback.filter(F.action == "open_cart"))
@@ -216,7 +220,7 @@ async def orders_discount_order():
     pass
 
 @orders_router.callback_query(StateFilter(BillStates.edit_order), OrderNavigateCallback.filter(F.action == "save_mix"))
-async def orders_save_mix():
+async def orders_save_mix(query: CallbackQuery, Manager: Manager):
     pass
 
 

@@ -5,7 +5,7 @@ from datetime import datetime
 from ..misc.history_manager import Manager
 
 from ..models import BillData, Order, User
-
+from ..misc.cache import Cache
 from .callbacks import BillsCommit, BillsNavigate, OrderNavigateCallback, NavigatePageKeyboard
 from .pager import BasicPageGenerator
 
@@ -73,7 +73,7 @@ class BillKeyboards(BasicPageGenerator):
 
         return keyboard.as_markup()
     
-    async def navigate_page_slider(self, query: CallbackQuery, callback_data: NavigatePageKeyboard, Manager: Manager):
+    async def navigate_page_slider(self, query: CallbackQuery, callback_data: NavigatePageKeyboard, Manager: Manager, cache: Cache):
         await query.answer()
 
         current_page = self.get_current_page(callback_data)
