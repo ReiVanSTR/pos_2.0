@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from .basic import Basic, ObjectId
 from typing import List
 
+
 @dataclass
 class TabaccoData():
     _id: ObjectId
@@ -11,6 +12,7 @@ class TabaccoData():
     brand: str
     type: str
     weight: float
+    is_showed: bool
     used_weight: float = 0.0
 
     def to_dict(self):
@@ -29,6 +31,20 @@ class Tabacco(Basic):
     brand: str
     type: str
     weight: float = Field(default = 0)
+    is_showed: bool = Field(default = False)
+
+    @classmethod
+    async def create_tabacco(cls, label, brand, type):
+        document = {
+            "label":label,
+            "brand":brand,
+            "type":type,
+            "weight":0,
+            "is_showed":False
+        }
+
+        obj = await cls._collection.insert_one(document)
+        return obj.inserted_id
 
     @classmethod
     async def get_by_id(cls, id: Union[ObjectId, str]):
@@ -48,8 +64,8 @@ class Tabacco(Basic):
         return [document["brand"] async for document in documents]
     
     @classmethod
-    async def get_all(cls):
-        documents = cls._collection.find()
+    async def get_all(cls, filtr = {}):
+        documents = cls._collection.find(filtr)
         return [TabaccoData(**document) async for document in documents]
     
     @classmethod
@@ -80,6 +96,16 @@ class Tabacco(Basic):
             id = ObjectId(id)
         
         await cls._collection.update_one({"_id":id}, {"$set":{"weight":new_weight}})
+
+    @classmethod
+    async def change_visibility(cls, id):
+        if isinstance(id, str):
+            id = ObjectId(id)
+        current = await cls._collection.find_one({"_id":id}, {"is_showed"})
+        
+        current = current.get("is_showed")
+
+        await cls._collection.update_one({"_id":id}, {"$set":{"is_showed":not current}})
     
 
 Tabacco.set_collection('tabacco')

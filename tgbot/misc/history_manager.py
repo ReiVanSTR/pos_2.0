@@ -2,7 +2,7 @@ import logging
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.scene import HistoryManager
 from aiogram.fsm.state import State
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 class Manager(HistoryManager):
 
@@ -34,9 +34,11 @@ class Manager(HistoryManager):
         record_data.update(data)
         await self._history_state.update_data(history=history)
 
-    async def push(self, state: Optional[str], data: Dict[str, Any] = {}, start_data: Dict[str, Any] = None, push: bool = False):
+    async def push(self, state: Union[Optional[str], Optional[State]], data: Dict[str, Any] = {}, start_data: Dict[str, Any] = None, push: bool = False):
         history_data = await self._history_state.get_data()
         history = history_data.setdefault("history", [])
+        if isinstance(state, State):
+            state = state.state
 
         if len(history) > self._size:
             history = history[-self._size :]

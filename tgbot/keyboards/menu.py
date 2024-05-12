@@ -38,7 +38,7 @@ class MenuKeyboards():
 
         options_button = InlineKeyboardBuilder().button(
                                                 text = f"Options⚙️", 
-                                                callback_data = MenuNavigateCallback(button_name = "bills"))
+                                                callback_data = MenuNavigateCallback(button_name = "test"))
         options_button.adjust(1)
         keyboard.attach(options_button)
 

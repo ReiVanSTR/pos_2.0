@@ -1,24 +1,19 @@
-import json
 import logging
-from aiogram.fsm.context import FSMContext
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from typing import List, Optional, Dict
 
-from bson import ObjectId
 from ..models import Tabacco, TabaccoData, Invent, InventData
 from .pager import BasicPageGenerator
-from ..misc.states import InventForm
-from .callbacks import MenuNavigateCallback
+from ..misc.history_manager import Manager
  
 menu = ["Add", "Invent", "Show"]
 
 brand_types = ["Standart", "Premium", "Mix", "Pasta", "Węgiel"]
 
 class StorageNavigate(CallbackData, prefix = "storage"):
-    button_name: str
-    type: str #category, sub-category
+    action: str
 
 #add form Callback class
 class Insert(CallbackData, prefix = "insert"):
@@ -30,7 +25,7 @@ class Insert(CallbackData, prefix = "insert"):
 class NavigatePageKeyboard(CallbackData, prefix = "page_callback"):
     action: str #first, prev, next, last, static
     current_page: int
-    kwargs: Optional[str] = ""
+    tabacco_id: Optional[str] = ""
 
 class StorageCommit(CallbackData, prefix = "storage_commit"):
     commit: str #yes, nope
@@ -41,10 +36,10 @@ def storage_menu():
     for menu_button in menu:
         keyboard.button(
             text = menu_button,
-            callback_data = StorageNavigate(button_name = menu_button.lower(), type = "category")
+            callback_data = StorageNavigate(action = menu_button.lower())
         )
     
-    back_button = InlineKeyboardBuilder().button(text = "<<Menu<<", callback_data = MenuNavigateCallback(button_name = "main_menu"))
+    back_button = InlineKeyboardBuilder().button(text = "<<Menu<<", callback_data = StorageNavigate(action = "back"))
     
     keyboard.attach(back_button)
 
@@ -61,7 +56,7 @@ def storage_brand_types():
 
     keyboard.button(
         text = "<<",
-        callback_data = StorageNavigate(button_name = "main", type = "main")
+        callback_data = StorageNavigate(action = "back")
     )
 
     keyboard.adjust(len(brand_types), 1)
@@ -74,7 +69,7 @@ async def storage_brand(type: str) -> InlineKeyboardMarkup:
 
     keyboard.button(
         text = "New brand",
-        callback_data = StorageNavigate(button_name = "new_brand", type = "None")
+        callback_data = StorageNavigate(action = "new_brand")
     )
 
     for brand in brands:
@@ -83,12 +78,12 @@ async def storage_brand(type: str) -> InlineKeyboardMarkup:
             callback_data = Insert(brand_name = brand)
         )
 
-    keyboard.button(
+    keyboard.attach(InlineKeyboardBuilder().button(
         text = "<<",
-        callback_data = StorageNavigate(button_name = "add", type = "category")
-    )
+        callback_data = StorageNavigate(action = "back")
+    ))
 
-    keyboard.adjust(1,3,3,1)
+    keyboard.adjust(1,3)
     return keyboard.as_markup()
 
 def storage_cancel():
@@ -96,7 +91,7 @@ def storage_cancel():
 
     keyboard.button(
         text = "Cancel",
-        callback_data = StorageNavigate(button_name = "main", type = "main")
+        callback_data = StorageNavigate(action = "back")
     )
 
     return keyboard.as_markup()
@@ -139,7 +134,7 @@ class ShowPageGenerator(BasicPageGenerator):
         for raw in buttons:
             keyboard.button(
                 text = f"{raw.type} | {raw.brand} - {raw.label} - {raw.weight}g",
-                callback_data = NavigatePageKeyboard(action = "show_tabacco", current_page = current_page, kwargs=raw._id.__str__())
+                callback_data = NavigatePageKeyboard(action = "show_tabacco", current_page = current_page, tabacco_id=raw._id.__str__())
             )
 
         keyboard.adjust(1, repeat = True)
@@ -149,7 +144,7 @@ class ShowPageGenerator(BasicPageGenerator):
         keyboard.row(*navigate_buttons.buttons, width = 5)
 
         back_button = InlineKeyboardBuilder()
-        back_button.button(text = "<< Storage <<",callback_data = StorageNavigate(button_name = "main", type = "main"))
+        back_button.button(text = "<< Storage <<",callback_data = StorageNavigate(action = "back"))
 
         keyboard.attach(back_button)
 
@@ -158,12 +153,10 @@ class ShowPageGenerator(BasicPageGenerator):
     async def tabacco_history_keyboard(self, tabacco_id: str, current_page):
         keyboard = InlineKeyboardBuilder()
         data = await Invent.get_changes(tabacco_id)
+        tabacco = await Tabacco.get_by_id(tabacco_id)
 
         if not data:
             keyboard.button(text = "Not inventarizet yet.", callback_data = NavigatePageKeyboard(action = "static", current_page = current_page))
-            keyboard.button(text = "<<", callback_data = NavigatePageKeyboard(action = "redraw", current_page = current_page))
-            keyboard.adjust(1, repeat = True)
-            return keyboard.as_markup()
         else:
             for change in data.changes:
                 keyboard.button(
@@ -173,9 +166,16 @@ class ShowPageGenerator(BasicPageGenerator):
             
             keyboard.adjust(1, repeat = True)
 
-            keyboard.attach(InlineKeyboardBuilder().button(text = "<<", callback_data = NavigatePageKeyboard(action = "redraw", current_page = current_page)))
+        remove_keyboard = InlineKeyboardBuilder()
 
-            return keyboard.as_markup()
+        remove_keyboard.button(text = "Remove tabacco", callback_data = StorageNavigate(action = "remove_tabacco"))
+        remove_keyboard.button(text = "Showed" if tabacco.is_showed else "Hiden", callback_data = StorageNavigate(action = "show_checkbox"))
+
+        keyboard.attach(remove_keyboard)
+
+        keyboard.attach(InlineKeyboardBuilder().button(text = "<<", callback_data = StorageNavigate(action = "back")))
+
+        return keyboard.as_markup()
     
     async def navigate_callbacks(self, query: CallbackQuery, callback_data: NavigatePageKeyboard):
         await query.answer()
@@ -197,9 +197,9 @@ def storage_invent_menu():
     invent_menu_buttons = ["Single", "Total"]
 
     for button in invent_menu_buttons:
-        keyboard.button(text = button, callback_data = StorageNavigate(button_name = button.lower(), type = "category"))
+        keyboard.button(text = button, callback_data = StorageNavigate(action = button.lower()))
 
-    keyboard.button(text = "<<", callback_data = StorageNavigate(button_name = "main", type = "main"))
+    keyboard.button(text = "<<", callback_data = StorageNavigate(action = "back"))
 
     keyboard.adjust(1, repeat = True)
 
@@ -220,7 +220,7 @@ class InventPageGenerator(BasicPageGenerator):
         for raw in buttons:
             keyboard.button(
                 text = f"{raw.type} | {raw.brand} - {raw.label} - {raw.weight}g",
-                callback_data = NavigatePageKeyboard(action = "select_button", current_page = current_page, kwargs = raw._id.__str__())
+                callback_data = NavigatePageKeyboard(action = "select_button", current_page = current_page, tabacco_id = raw._id.__str__())
             )
 
         keyboard.adjust(1, repeat = True)
@@ -230,7 +230,7 @@ class InventPageGenerator(BasicPageGenerator):
         keyboard.row(*navigate_buttons.buttons, width = 5)
         
         back_button = InlineKeyboardBuilder()
-        back_button.button(text = "<< Invent <<",callback_data = StorageNavigate(button_name = "invent", type = "category"))
+        back_button.button(text = "<< Invent <<",callback_data = StorageNavigate(action = "back"))
 
         keyboard.attach(back_button)
 
@@ -247,30 +247,26 @@ class InventPageGenerator(BasicPageGenerator):
 
         await query.message.edit_text(text = "Invent", reply_markup = markup)
 
-    async def navigate_page_num_keyboard(self, query: CallbackQuery, callback_data: NumKeyboardCallback, state: FSMContext):
-        await query.answer()
-
-        state_data = await state.get_data()
+    async def navigate_page_num_keyboard(self, query: CallbackQuery, callback_data: NumKeyboardCallback, Manager: Manager):
+        await query.answer(cache_time=1)
 
         if callback_data.action == "clear":
-            await state.update_data({"current_num":0})
-            markup = self.page_num_keyboard(current_num=0, callback = NumKeyboardCallback)
+            await Manager.update_data("current_num", 0)
+            markup = self.show_num_keyboard(current_num=0)
+
         elif callback_data.action == "static":
             return
-        elif callback_data.action == "commit":
-            await state.set_state(InventForm.confirm)
-            return 
-            # await state.set_data({"current_num":state_data["current_num"]})
+        
         else:
             operand = float(callback_data.action) if callback_data.action.find(".") else int(callback_data.action)
-            current_num = state_data["current_num"]
+            current_num = await Manager.get_data("current_num")
             if (current_num + operand) <= 0:
-                await state.update_data({"current_num":0})
-                markup = self.page_num_keyboard(current_num=0, callback = NumKeyboardCallback)
+                await Manager.update_data("current_num", 0)
+                markup = self.show_num_keyboard(current_num=0)
             else:
                 current_num = round(current_num + operand, 1)
-                await state.update_data({"current_num":current_num})
-                markup = self.page_num_keyboard(current_num=current_num, callback = NumKeyboardCallback)
+                await Manager.update_data("current_num", current_num)
+                markup = self.show_num_keyboard(current_num=current_num)
 
         await query.message.edit_text("Input invent weight", reply_markup = markup)
 

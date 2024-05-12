@@ -20,10 +20,10 @@ async def track_changes(cache: Cache):
                     await cache.update(key, data)
                     logging.log(30, f"Updated cache with key {key}")
 
-                if change.operationType in ["update"]:
+                if change.operationType in ["update"]: 
                     document_id = change.documentKey.get("_id").__str__()
                     data = await Bills.get_bill(document_id)
-                    key = f"bills_bill_{document_id}"
+                    key = f"bills_bill{document_id}"
                     await cache.update(key = key, data = data)
 
                     logging.log(30, f"Updated cache with key {key}")

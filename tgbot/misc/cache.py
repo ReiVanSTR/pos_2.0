@@ -65,7 +65,7 @@ class Cache():
     
     @cached("orders", "all_tabacco")
     async def getAllTabacco(self):
-        return await Tabacco.get_all()
+        return await Tabacco.get_all({"is_showed":True})
     
     @cached("bills", "bill", keygen = True)
     async def getBill(self, bill_id):

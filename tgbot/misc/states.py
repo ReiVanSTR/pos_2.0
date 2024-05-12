@@ -1,9 +1,10 @@
 from aiogram.fsm.state import StatesGroup, State
 
-class NavigateStorage(StatesGroup):
+class StorageStates(StatesGroup):
     menu = State()
     add = State()
     show = State()
+    show_tabacco = State()
     invent = State()
 
 #adding new tabacco form
@@ -15,6 +16,7 @@ class Form(StatesGroup):
     commit = State()
 
 class InventForm(StatesGroup):
+    select_tabacco = State()
     input_weight = State()
     confirm = State()
 

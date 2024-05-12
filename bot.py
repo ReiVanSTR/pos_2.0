@@ -126,7 +126,7 @@ async def main():
     register_global_middlewares(dp, config)
     
     await asyncio.gather(
-        dp.start_polling(bot, cache = cache),
+        dp.start_polling(bot, cache = cache, dp = dp),
         start_observers(cache)
     )
    

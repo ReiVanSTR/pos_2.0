@@ -1,6 +1,6 @@
 import logging
-from aiogram import Router, F
-from aiogram.filters import CommandStart, StateFilter
+from aiogram import Router, F, Dispatcher
+from aiogram.filters import CommandStart, StateFilter, Command
 from aiogram.types import Message, CallbackQuery, WebAppData, Update
 from aiogram.fsm.context import FSMContext
 from ..middlewares.user import UserMiddleware
@@ -32,8 +32,17 @@ async def user_start(message: Message, user: UserData, state:FSMContext, History
 #     markup = await menu_keyboards.menu_keyboard(user = user)
 #     await message.answer(f"Hello, {user.username}", reply_markup = markup)
 
-@menu_router.message(F.message.via_bot)
-async def catch(message: Message):
-    logging.log(30, message)
+async def input_label(query: CallbackQuery, bot ,dispatcher: Dispatcher):
+    await dispatcher.feed_raw_update(bot, {"input_message":"bla bla bla"})
 
+
+
+@menu_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "test"))
+async def catch(query: CallbackQuery, bot, dispatcher):
+    logging.log(30, bot, dispatcher)
+
+    await input_label(query, bot, dispatcher)
+
+
+# @menu_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "test"))
 
