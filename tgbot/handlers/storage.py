@@ -13,14 +13,11 @@ from ..misc.states import StorageStates, Form, InventForm, MenuStates
 from ..keyboards.callbacks import MenuNavigateCallback
 from ..keyboards.menu import MenuKeyboards
 from ..misc.history_manager import Manager
+from ..misc.main_query import main_query
 
 from datetime import datetime
 
 storage_router = Router()
-
-global main_query
-main_query = {}
-
 
 
 #command(/storage)
@@ -198,7 +195,7 @@ invent_page_generator = InventPageGenerator()
 invent_page_generator.connect_router(storage_router)
 invent_page_generator.register_handler(invent_page_generator.navigate_page_slider, [InventForm.select_tabacco, NavigatePageKeyboard.filter(F.action.in_(["first", "last", "prev","next"]))])
 invent_page_generator.register_handler(invent_page_generator.navigate_page_num_keyboard, [InventForm.input_weight, NumKeyboardCallback.filter(F.action.not_in(["commit"]))])
-
+invent_page_generator.register_message_handler(invent_page_generator.massage_input, [InventForm.input_weight, F.text.is_not(None)])
 @storage_router.callback_query(StateFilter(StorageStates.menu), StorageNavigate.filter(F.action == "invent"))
 async def storage_invent_show(query: CallbackQuery, Manager: Manager):
     await query.answer()
@@ -221,11 +218,11 @@ async def storage_choose_invent_type(query: CallbackQuery, Manager: Manager):
     await query.message.edit_text("Single invent:", reply_markup = markup)
 
 @storage_router.callback_query(StateFilter(InventForm.select_tabacco), NavigatePageKeyboard.filter(F.action == "select_button"))
-async def storage_start_invent(query: CallbackQuery, callback_data: NavigatePageKeyboard, Manager: Manager):
+async def storage_start_invent(query: CallbackQuery, callback_data: NavigatePageKeyboard, Manager: Manager, user):
     await query.answer()
     document = await Tabacco.get_by_id(callback_data.tabacco_id)
     await Manager.push(InventForm.input_weight, {"tabacco_id":callback_data.tabacco_id, "current_num": 0})
-
+    main_query[user.user_id] = query
     markup = invent_page_generator.show_num_keyboard()
 
     await query.message.edit_text(f"{document.brand} - {document.label} - Expected weight: {document.weight}", reply_markup = markup)

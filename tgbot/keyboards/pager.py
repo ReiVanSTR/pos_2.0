@@ -37,6 +37,10 @@ class BasicPageGenerator():
         cls._router.callback_query.register(handler, *filters)
 
     @classmethod
+    def register_message_handler(cls, handler, filters):
+        cls._router.message.register(handler, *filters)
+
+    @classmethod
     def update(cls, data):
         cls.data = data
         cls._number_of_pages = -(-len(cls.data) // cls._buttons_per_page)

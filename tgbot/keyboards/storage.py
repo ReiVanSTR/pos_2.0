@@ -1,13 +1,13 @@
 import logging
 from aiogram.filters.callback_data import CallbackData
-from aiogram.types import InlineKeyboardMarkup, CallbackQuery
+from aiogram.types import InlineKeyboardMarkup, CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from typing import List, Optional, Dict
 
 from ..models import Tabacco, TabaccoData, Invent, InventData
 from .pager import BasicPageGenerator
 from ..misc.history_manager import Manager
- 
+from ..misc.main_query import main_query
 menu = ["Add", "Invent", "Show"]
 
 brand_types = ["Standart", "Premium", "Mix", "Pasta", "Węgiel"]
@@ -246,6 +246,18 @@ class InventPageGenerator(BasicPageGenerator):
         markup = self.invent_page_keyboard(current_page = current_page)
 
         await query.message.edit_text(text = "Invent", reply_markup = markup)
+
+    async def massage_input(self, message: Message, Manager: Manager, user):
+        try:
+            if isinstance(float(message.text.strip()), float):
+                await Manager.update_data("current_num", message.text.strip())
+                markup = self.show_num_keyboard(current_num=message.text.strip())
+        except:
+            markup = self.show_num_keyboard(current_num=0)
+            
+        await message.delete()
+        await main_query[user.user_id].message.edit_text("Input invent weight", reply_markup = markup) 
+
 
     async def navigate_page_num_keyboard(self, query: CallbackQuery, callback_data: NumKeyboardCallback, Manager: Manager):
         await query.answer(cache_time=1)
