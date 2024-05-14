@@ -44,7 +44,3 @@ async def catch(query: CallbackQuery, bot, dispatcher):
     await input_label(query, bot, dispatcher)
 
 
-
-@menu_router.message(StateFilter("*"))
-# @menu_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "test"))
-
