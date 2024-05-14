@@ -250,8 +250,8 @@ class InventPageGenerator(BasicPageGenerator):
     async def massage_input(self, message: Message, Manager: Manager, user):
         try:
             if isinstance(float(message.text.strip()), float):
-                await Manager.update_data("current_num", message.text.strip())
-                markup = self.show_num_keyboard(current_num=message.text.strip())
+                await Manager.update_data("current_num", float(message.text.strip()))
+                markup = self.show_num_keyboard(current_num=float(message.text.strip()))
         except:
             markup = self.show_num_keyboard(current_num=0)
             
