@@ -162,9 +162,13 @@ class OrderKeyboards(BasicPageGenerator):
         keyboard = InlineKeyboardBuilder()
 
         cost_menu = [
-            {"Standart":80},
-            {"Premium": 100},
-            {"Stuff": 40},
+            {"Standart 80 pln":80},
+            {"Premium 100 pln": 100},
+            {"Classic 69 pln": 69},
+            {"Chief 79 pln": 79},
+            {"Spritz 79 pln": 79},
+            {"Stuff 40 pln": 40},
+            {"Wystawka": 0},
         ]
 
         for type in cost_menu:
