@@ -18,6 +18,21 @@ class Post(Enum):
     def get_post(self):
         return {"post_name":self._name_, "post_value":self._value_}
 
+
+class Permissions(Enum):
+    GLOBAL = "global_access"
+
+    OPEN_STORAGE = "open_storage_access"
+    INVENTARIZE_STORAGE = "inventarize_storage_access"    
+    OPEN_SESSION = "open_session_schedules_access"
+
+    BILLS_REMOVE_BILL = "bills_remove_bill_access"
+    ORDERS_REMOVE_ORDER = "orders_remove_order_access"
+    HAND_OVER_BILL = "hand_over_bill_access"
+
+    def __repr__(self):
+        return self.value
+
 class HoursMenager():
     def __init__(self, work_hours) -> None:
         self.work_hours = work_hours
@@ -29,13 +44,15 @@ class UserData:
     username: str
     post: Post
     work_hours: HoursMenager
+    permissions: List
 
-    def __init__(self, _id, user_id, username, post, work_hours):
+    def __init__(self, _id, user_id, username, post, work_hours, permissions):
         self._id = _id
         self.user_id = user_id
         self.username = username
         self.post = Post(post)
         self.work_hours = HoursMenager(work_hours)
+        self.permissions = permissions
 
 
 class User(Basic):
@@ -44,6 +61,7 @@ class User(Basic):
     username: str
     post: Post
     work_hours: List
+    permissions: List
 
     @classmethod
     async def is_exists(cls, user_id):
@@ -71,6 +89,10 @@ class User(Basic):
         document = await cls._collection.find_one({"user_id":user_id})
 
         return UserData(**document)
+    
+    @classmethod
+    async def grand_permission(cls, user_id, permission: Permissions):
+        await cls._collection.update_one({"user_id":user_id}, {"$push":{"permissions":permission.value}})
 
     
 User.set_collection("Users")

@@ -25,7 +25,7 @@ order_keyboars.register_handler(order_keyboars.navigate_page_num_keyboard, [NewO
 order_keyboars.register_handler(order_keyboars.navigate_page_num_keyboard, [NewOrder.edit_weight, NumKeyboardCallback.filter(F.action.not_in(["commit"]))])
 
 
-@orders_router.callback_query(StateFilter(BillStates.bills_list), OrderNavigateCallback.filter(F.action == "open_bill"))
+@orders_router.callback_query(StateFilter(BillStates.bills_menu), OrderNavigateCallback.filter(F.action == "open_bill"))
 async def orders_open_bill(query: CallbackQuery, cache: Cache, callback_data: OrderNavigateCallback, Manager: Manager):
     await query.answer()
 
@@ -110,7 +110,7 @@ async def orders_show_cart(query: CallbackQuery, state: FSMContext, Manager: Man
 async def orders_remove_from_cart(query: CallbackQuery, Manager: Manager, callback_data: OrderNavigateCallback):
     await query.answer()
 
-    cart = await Manager.get_data("cart")
+    cart = await Manager.get_data("cart", NewOrder.new_hookah)
     cart.pop(callback_data.tabacco_id)
     await Manager.push_data(NewOrder.new_hookah, cart, "cart")
 

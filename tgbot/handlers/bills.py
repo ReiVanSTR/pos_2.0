@@ -24,29 +24,30 @@ from ..models import (
 bills_router = Router()
 keyboards = BillKeyboards()
 keyboards.connect_router(bills_router)
-keyboards.register_handler(keyboards.navigate_page_slider, [BillStates.bills_list, NavigatePageKeyboard.filter(F.action.in_(["first", "last", "prev","next","redraw"]))])
+keyboards.register_handler(keyboards.navigate_page_slider, [BillStates.bills_menu, NavigatePageKeyboard.filter(F.action.in_(["first", "last", "prev","next","redraw"]))])
 
 @bills_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "bills"))
-async def show_bills_menu(query: CallbackQuery, state: FSMContext, Manager: Manager):
+async def show_bills_menu(query: CallbackQuery, state: FSMContext, Manager: Manager, cache: Cache):
     await query.answer()
-
-    markup = keyboards.bills_menu()
-    await query.message.edit_text("Bills Menu", reply_markup = markup)
-
-
-    await Manager.push(BillStates.bills_menu.state, {})
-
-
-@bills_router.callback_query(StateFilter(BillStates.bills_menu), BillsNavigate.filter(F.action == "bills_list"))
-async def show_bills_list(query: CallbackQuery, Manager: Manager, cache: Cache):
-    await query.answer()
-    await Manager.push(BillStates.bills_list.state, {"current_page":1})
+    await Manager.push(BillStates.bills_menu, {"current_page":1})
 
     
     keyboards.update(data = await cache.getAllBills(filter = {"is_closed":False}, update = True))
-    markup = await keyboards.bills_list()
+    markup = await keyboards.bills_menu()
 
     await query.message.edit_text("Bills list", reply_markup = markup)
+
+
+# @bills_router.callback_query(StateFilter(BillStates.bills_menu), BillsNavigate.filter(F.action == "bills_menu"))
+# async def show_bills_menu(query: CallbackQuery, Manager: Manager, cache: Cache):
+#     await query.answer()
+#     await Manager.push(BillStates.bills_menu.state, {"current_page":1})
+
+    
+#     keyboards.update(data = await cache.getAllBills(filter = {"is_closed":False}, update = True))
+#     markup = await keyboards.bills_menu()
+
+#     await query.message.edit_text("Bills list", reply_markup = markup)
 
 @bills_router.callback_query(StateFilter(BillStates.bills_menu), BillsNavigate.filter(F.action == "new_bill"))
 async def form_new_bill(query: CallbackQuery, state: FSMContext, Manager: Manager):
@@ -79,7 +80,7 @@ async def form_commit_name(query: CallbackQuery, state: FSMContext, Manager: Man
     bill_name = await Manager.get_data("bill_name")
     bill_id = await Bills.create_bill(bill_name = bill_name, user_id = query.from_user.id)
     await Manager.goto(BillStates.bills_menu)
-    await Manager.push(BillStates.bills_list.state, {"current_page":1})
+    await Manager.push_data(BillStates.bills_menu, {"current_page":1})
     await Manager.push(BillStates.open_bill.state, {"bill_id":bill_id.__str__()})
 
     keyboards.update(data = await Bills.get_all_bills({"is_closed":False}))
@@ -106,13 +107,13 @@ async def delete_bill(query: CallbackQuery, Manager: Manager, cache: Cache):
     await query.answer()
     bill_id = await Manager.get_data("bill_id")
     await Bills.delete_bill(bill_id=bill_id)
-    await Manager.goto(BillStates.bills_list)
+    await Manager.goto(BillStates.bills_menu)
     
 
     keyboards.update(data = await cache.getAllBills(filter = {"is_closed":False}, update = True))
-    markup = await keyboards.bills_list()
+    markup = await keyboards.bills_menu()
 
-    await query.message.edit_text(text = "Bills list", reply_markup = markup)
+    await query.message.edit_text(text = "Bills menu", reply_markup = markup)
 
 
 @bills_router.callback_query(StateFilter(BillStates.open_bill), BillsNavigate.filter(F.action == "options"))
@@ -139,11 +140,11 @@ async def orders_close_bill(query: CallbackQuery, Manager: Manager, callback_dat
             tabacco = await Tabacco.get_by_id(id)
             await Tabacco.update_weight(id, tabacco.weight - weight)
 
-    await Manager.goto(BillStates.bills_list)
+    await Manager.goto(BillStates.bills_menu)
 
     keyboards.update(data = await Bills.get_all_bills({"is_closed":False}))    
 
-    markup = await keyboards.bills_list()
+    markup = await keyboards.bills_menu()
 
     logging.log(30, f"Closed bill {bill.bill_name}. Crerated by {bill.created_by}. Closed by {query.from_user.id}")
     await query.message.edit_text("Bill", reply_markup = markup)
@@ -163,8 +164,7 @@ async def back_to_menu(query: CallbackQuery, state: FSMContext, user: UserData, 
 
     markups = {
         "MenuStates:menu":await MenuKeyboards().menu_keyboard(user = user),
-        "BillStates:bills_menu":keyboards.bills_menu(),
-        "BillStates:bills_list":await keyboards.bills_list(),
+        "BillStates:bills_menu":await keyboards.bills_menu(),
         "FormNewBill:input_name":keyboards.new_bill_cancel(),
         "BillStates:open_bill":await keyboards.open_bill(await cache.getBill(bill_id)) if bill_id else None
     }
@@ -172,7 +172,6 @@ async def back_to_menu(query: CallbackQuery, state: FSMContext, user: UserData, 
     reply_text = {
         "MenuStates:menu":"Menu",
         "BillStates:bills_menu":"Bills menu",
-        "BillStates:bills_list":"Bills list",
         "BillStates:open_bill":"Bill",
         "FormNewBill:input_name":"Input table name",
     }

@@ -1,4 +1,6 @@
 from tgbot.models import Bills, Tabacco
+from aiogram.types import CallbackQuery, Message
+from typing import Union
 import logging
 from functools import wraps
 import asyncio
@@ -36,7 +38,6 @@ def cached(prefix, key, keygen: bool = False):
                 cache_key += args_key
             
             cache = args[0].cache  # Предполагается, что cache хранится в первом аргументе
-            logging.log(30, f"current cache: {cache}")
             if not update_cache and cache_key in cache:
                 logging.info(f"From cache: {cache_key}")
                 return cache[cache_key]
@@ -78,5 +79,18 @@ class Cache():
         except:
             logging.log(30, "Error with update data: {data} with key: {key}")
 
+    async def get_main_query(self, user_id):
+        try:
+            return self.cache["main_query"][user_id]
+        except:
+            return None
+
+    async def set_main_query(self, user_id, query: Union[CallbackQuery, Message]):
+        if not self.cache.get("main_query"):
+            self.cache["main_query"] = {}
+        try:
+            self.cache["main_query"][user_id] = query
+        except:
+            logging.warning(f"Error with update data: {query} with key: {user_id}")
 
 _cache = Cache()

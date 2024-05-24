@@ -4,7 +4,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from datetime import datetime
 from ..misc.history_manager import Manager
 
-from ..models import BillData, Order, User
+from ..models import BillData, Order, User, Permissions
 from ..misc.cache import Cache
 from .callbacks import BillsCommit, BillsNavigate, OrderNavigateCallback, NavigatePageKeyboard
 from .pager import BasicPageGenerator
@@ -28,20 +28,6 @@ class BillKeyboards(BasicPageGenerator):
         return keyboard.as_markup()
     
     
-    def bills_menu(self):
-        menu = ["New bill", "Bills List"]
-        keyboard = InlineKeyboardBuilder()
-
-        for menu_button in menu:
-            keyboard.button(
-                text = menu_button,
-                callback_data = self._navigate_callback(action = menu_button.replace(" ", "_").lower())
-            )
-        
-        back_button = InlineKeyboardBuilder().button(text = "<<Menu<<", callback_data = self._navigate_callback(action = "back"))
-        keyboard.attach(back_button)
-
-        return keyboard.as_markup()
     
     def new_bill_cancel(self):
         keyboard = InlineKeyboardBuilder()
@@ -50,11 +36,13 @@ class BillKeyboards(BasicPageGenerator):
 
         return keyboard.as_markup()
 
-    async def bills_list(self, current_page = 1):
+    async def bills_menu(self, current_page = 1):
         keyboard = InlineKeyboardBuilder()
 
         start_index, end_index = self.indexes(current_page=current_page)
         buttons = self.data[start_index:end_index]
+
+        keyboard.button(text = " >> New Bill << ", callback_data = BillsNavigate(action = "new_bill"))
 
         for raw in buttons:
             user = await User.get_user_by_user_id(raw.created_by)
@@ -82,7 +70,7 @@ class BillKeyboards(BasicPageGenerator):
         
         await Manager.update({"current_page":current_page})
         
-        markup = await self.bills_list(current_page = current_page)
+        markup = await self.bills_menu(current_page = current_page)
 
         await query.message.edit_text(text = "Bills: ", reply_markup = markup)
 
@@ -136,7 +124,7 @@ class BillKeyboards(BasicPageGenerator):
     def show_options(self):
         keyboard = InlineKeyboardBuilder()
         keyboard.button(
-            text = "Delete bill", callback_data = BillsNavigate(action = "delete_bill", permissions = "Admin")
+            text = "Delete bill", callback_data = BillsNavigate(action = "delete_bill", permissions = Permissions.BILLS_REMOVE_BILL.value)
         )
         keyboard.button(
             text = "Hand over bill", callback_data = BillsNavigate(action = "hand_over_bill")

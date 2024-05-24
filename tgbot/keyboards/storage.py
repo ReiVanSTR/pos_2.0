@@ -4,31 +4,16 @@ from aiogram.types import InlineKeyboardMarkup, CallbackQuery, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from typing import List, Optional, Dict
 
+from .callbacks import StorageCommit, StorageNavigate, Insert, NavigatePageKeyboard
 from ..models import Tabacco, TabaccoData, Invent, InventData
 from .pager import BasicPageGenerator
 from ..misc.history_manager import Manager
 from ..misc.main_query import main_query
+
 menu = ["Add", "Invent", "Show"]
 
 brand_types = ["Standart", "Premium", "Mix", "Pasta", "Węgiel"]
 
-class StorageNavigate(CallbackData, prefix = "storage"):
-    action: str
-
-#add form Callback class
-class Insert(CallbackData, prefix = "insert"):
-    brand_type: Optional[str] = None
-    brand_name: Optional[str] = None
-    tabacco_name: Optional[str] = None
-    commit: Optional[str] = None
-
-class NavigatePageKeyboard(CallbackData, prefix = "page_callback"):
-    action: str #first, prev, next, last, static
-    current_page: int
-    tabacco_id: Optional[str] = ""
-
-class StorageCommit(CallbackData, prefix = "storage_commit"):
-    commit: str #yes, nope
 
 def storage_menu():
     keyboard = InlineKeyboardBuilder()

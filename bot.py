@@ -19,6 +19,7 @@ from tgbot.config import load_config, Config
 from tgbot.handlers import routers_list
 from tgbot.middlewares.config import ConfigMiddleware
 from tgbot.middlewares.user import UserMiddleware
+from tgbot.middlewares.permission import PermissionsMiddleware
 from tgbot.services.db_observer.loader import start_observers, observers
 from cachetools import TTLCache
 from tgbot.misc.cache import _cache
@@ -43,6 +44,7 @@ def register_global_middlewares(dp: Dispatcher, config: Config, session_pool=Non
     middleware_types = [
         ConfigMiddleware(config),
         UserMiddleware(),
+        PermissionsMiddleware(),
     ]
 
     for middleware_type in middleware_types:

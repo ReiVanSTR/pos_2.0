@@ -1,8 +1,8 @@
-from redis import Redis
+from pydantic import Field
+from dataclasses import dataclass
+from .basic import Basic, ObjectId
+from typing import List
 
-from ..config import RedisConfig
-
-class Session:
-    def __init__(self, database_config: RedisConfig):
-        self.database = Redis(**database_config.__dict__)
-        
+class Session(Basic):
+    _id: ObjectId = Field(default_factory = ObjectId, alias = "_id") 
+    

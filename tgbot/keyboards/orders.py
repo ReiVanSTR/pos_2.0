@@ -10,7 +10,7 @@ from tgbot import keyboards
 from tgbot.handlers import orders
 
 from ..misc.history_manager import Manager
-from ..models import BillData, OrderData, Order, User,Tabacco
+from ..models import BillData, OrderData, Order, User,Tabacco, Permissions
 
 from .callbacks import BillsCommit, BillsNavigate, OrderNavigateCallback, NavigatePageKeyboard, NumKeyboardCallback, MenuNavigateCallback
 from .pager import BasicPageGenerator
@@ -213,7 +213,7 @@ class OrderKeyboards(BasicPageGenerator):
         )
         option_keyboard.button(
             text = "Remove❌", 
-            callback_data = OrderNavigateCallback(action = "remove_order")
+            callback_data = OrderNavigateCallback(action = "remove_order", permissions = Permissions.ORDERS_REMOVE_ORDER.value)
         )
 
         option_keyboard.button(

@@ -3,7 +3,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from typing import List, Optional, Dict, Union
 from datetime import datetime
 
-from ..models import User, UserData, Bills
+from ..models import User, UserData, Bills, Permissions
 
 from .callbacks import MenuNavigateCallback
 from .pager import BasicPageGenerator
@@ -25,14 +25,14 @@ class MenuKeyboards():
         keyboard.attach(bills_button)
 
         row = InlineKeyboardBuilder()
-        row.button(text = "Storage", callback_data = MenuNavigateCallback(button_name = "storage"))
+        row.button(text = "Storage", callback_data = MenuNavigateCallback(button_name = "storage", permissions = Permissions.OPEN_STORAGE.value))
         row.button(text = "Mixes",callback_data = MenuNavigateCallback(button_name = "mixes"))
         row.adjust(2)
         keyboard.attach(row)
 
         row = InlineKeyboardBuilder()
-        row.button(text = "Invent", callback_data = MenuNavigateCallback(button_name = "invent"))
-        row.button(text = "Session",callback_data = MenuNavigateCallback(button_name = "session"))
+        row.button(text = "Invent", callback_data = MenuNavigateCallback(button_name = "invent", permissions = Permissions.INVENTARIZE_STORAGE.value))
+        row.button(text = "Session",callback_data = MenuNavigateCallback(button_name = "session", permissions = Permissions.OPEN_SESSION.value))
         row.adjust(2)
         keyboard.attach(row)
 
