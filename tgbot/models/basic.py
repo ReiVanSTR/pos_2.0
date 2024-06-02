@@ -6,7 +6,6 @@ import binascii
 
 from bson.objectid import ObjectId as BsonObjectId
 
-test_collection = db.test
 
 class ObjectId(BsonObjectId):
     @classmethod
@@ -29,6 +28,7 @@ class Basic(BaseModel):
     @classmethod
     def set_collection(self, collection: str):
         self._collection = db[collection]
+        self._db = db
     
     @classmethod
     async def count(cls):

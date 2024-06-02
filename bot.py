@@ -20,6 +20,7 @@ from tgbot.handlers import routers_list
 from tgbot.middlewares.config import ConfigMiddleware
 from tgbot.middlewares.user import UserMiddleware
 from tgbot.middlewares.permission import PermissionsMiddleware
+from tgbot.middlewares.session import SessionMiddleware
 from tgbot.services.db_observer.loader import start_observers, observers
 from cachetools import TTLCache
 from tgbot.misc.cache import _cache
@@ -45,6 +46,7 @@ def register_global_middlewares(dp: Dispatcher, config: Config, session_pool=Non
         ConfigMiddleware(config),
         UserMiddleware(),
         PermissionsMiddleware(),
+        SessionMiddleware()
     ]
 
     for middleware_type in middleware_types:
@@ -69,6 +71,8 @@ def setup_logging():
     """
     log_level = logging.INFO
     bl.basic_colorized_config(level=log_level)
+    
+
 
     logging.basicConfig(
         level=logging.INFO,

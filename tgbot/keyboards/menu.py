@@ -3,7 +3,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from typing import List, Optional, Dict, Union
 from datetime import datetime
 
-from ..models import User, UserData, Bills, Permissions
+from ..models import User, UserData, Session, Permissions
 
 from .callbacks import MenuNavigateCallback
 from .pager import BasicPageGenerator
@@ -17,7 +17,7 @@ class MenuKeyboards():
         user_info_button.adjust(1)
         keyboard.attach(user_info_button)
 
-        bills_quantity = await Bills.count_documents({"is_closed":False})
+        bills_quantity = await Session.count_documents()
         bills_button = InlineKeyboardBuilder().button(
                                                 text = f"Bills ({bills_quantity})", 
                                                 callback_data = MenuNavigateCallback(button_name = "bills"))

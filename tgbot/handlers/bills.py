@@ -16,7 +16,8 @@ from ..models import (
     UserData,
     Bills,
     Order,
-    Tabacco
+    Tabacco,
+    Session,
 )
 
 
@@ -79,11 +80,12 @@ async def form_commit_name(query: CallbackQuery, state: FSMContext, Manager: Man
 
     bill_name = await Manager.get_data("bill_name")
     bill_id = await Bills.create_bill(bill_name = bill_name, user_id = query.from_user.id)
+    await Session.push_bill(bill_id)
     await Manager.goto(BillStates.bills_menu)
     await Manager.push_data(BillStates.bills_menu, {"current_page":1})
     await Manager.push(BillStates.open_bill.state, {"bill_id":bill_id.__str__()})
 
-    keyboards.update(data = await Bills.get_all_bills({"is_closed":False}))
+    keyboards.update(data = await Session.get_bills())
     markup = await keyboards.open_bill(await Bills.get_bill(bill_id))
 
     await query.message.edit_text("Bills menu", reply_markup = markup)
@@ -142,7 +144,7 @@ async def orders_close_bill(query: CallbackQuery, Manager: Manager, callback_dat
 
     await Manager.goto(BillStates.bills_menu)
 
-    keyboards.update(data = await Bills.get_all_bills({"is_closed":False}))    
+    keyboards.update(data = await Session.get_bills())    
 
     markup = await keyboards.bills_menu()
 

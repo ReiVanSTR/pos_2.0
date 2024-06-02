@@ -54,3 +54,9 @@ class NewOrder(StatesGroup):
     choose_cost = State()
 
     open_order = State()
+
+class SessionStates(StatesGroup):
+    menu = State()
+    activities = State()
+    bill_options = State()
+    open_order = State()

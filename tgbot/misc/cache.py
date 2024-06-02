@@ -1,4 +1,4 @@
-from tgbot.models import Bills, Tabacco
+from tgbot.models import Bills, Tabacco, Session
 from aiogram.types import CallbackQuery, Message
 from typing import Union
 import logging
@@ -55,12 +55,20 @@ class Cache():
 
 
     # @cachedmethod(cache=lambda self: self.cache, key=partial(keygen, "bills", "all_bills"))
+    # @cached("bills", "all_bills")
+    # async def getAllBills(self, filter: dict = {}, *args, **kwargs):
+        
+    #     async with self.lock:
+    #         try:
+    #             return await Bills.get_all_bills(filter)
+    #         except:
+    #             logging.error(f"Error with getting All bills")
     @cached("bills", "all_bills")
-    async def getAllBills(self, filter: dict = {}, *args, **kwargs):
+    async def getAllBills(self, *args, **kwargs):
         
         async with self.lock:
             try:
-                return await Bills.get_all_bills(filter)
+                return await Session.get_bills()
             except:
                 logging.error(f"Error with getting All bills")
     

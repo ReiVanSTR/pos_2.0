@@ -180,7 +180,7 @@ async def orders_commit_cost(query: CallbackQuery, Manager: Manager, callback_da
     cart = await Manager.get_data("cart", NewOrder.new_hookah)
     bill_id = await Manager.get_data("bill_id", BillStates.open_bill)
 
-    order_id = await Order.create_order("Shisha", query.from_user.id, [{key:value.get("used_weight")} for key, value in cart.items()], cost)
+    order_id = await Order.create_order("Shisha", query.from_user.id, [{key:value.get("used_weight")} for key, value in cart.items()], int(cost))
     await Bills.update_orders(bill_id, order_id)
 
     await Manager.goto(BillStates.open_bill)

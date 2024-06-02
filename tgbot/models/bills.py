@@ -91,6 +91,13 @@ class Bills(Basic):
             bill_id = ObjectId(bill_id)
 
         await cls._collection.delete_one({"_id":bill_id})
+
+    @classmethod
+    async def open_bill(cls, bill_id: ObjectId):
+        if isinstance(bill_id, str):
+            bill_id = ObjectId(bill_id)
+
+        await cls._collection.update_one({"_id":bill_id}, {"$set":{"is_closed":False, "payment_method":"cash"}})
     
 
 Bills.set_collection('bills')

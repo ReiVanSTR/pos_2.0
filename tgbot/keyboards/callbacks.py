@@ -58,3 +58,9 @@ class NavigatePageKeyboard(CallbackData, prefix = "page_callback"):
 
 class StorageCommit(CallbackData, prefix = "storage_commit"):
     commit: str #yes, nope
+
+class SessionNavigateCallback(CallbackData, prefix = "session"):
+    action: str
+    permissions: Optional[str] = None
+    bill_id: Optional[str] = None
+    order_id: Optional[str] = None

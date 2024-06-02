@@ -5,6 +5,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message
 from ..keyboards.callbacks import BillsNavigate
 from ..misc.history_manager import Manager
+from ..logging.setup import file_logger
 
 from ..models import User, UserData
 
@@ -24,5 +25,6 @@ class UserMiddleware(BaseMiddleware):
         data["Manager"] = Manager(state = data.get("state"), size = 15)
         user = await User.get_user_by_user_id(event.from_user.id)
         data["user"] = user
+        data["logger"] = file_logger
 
         return await handler(event, data)
