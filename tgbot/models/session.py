@@ -80,9 +80,7 @@ class Session(Basic):
 
         response = []
         for bill in _current_session.bills:
-            logging.log(30, bill)
             async for result in cls._db.bills.aggregate(bill_pipeline(bill)):
-                logging.log(30, result)
                 response.append(result)
 
         return response

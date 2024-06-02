@@ -4,6 +4,8 @@ from aiogram.filters import CommandStart, StateFilter
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
+from .markup import onState, Markups, StateKeyboard
+
 from ..keyboards.callbacks import MenuNavigateCallback, SessionNavigateCallback, NavigatePageKeyboard
 from ..keyboards.session import SessionKeyboards
 from ..keyboards.menu import MenuKeyboards
@@ -57,16 +59,18 @@ async def session_bill_options(query: CallbackQuery, Manager: Manager, callback_
     await query.answer()
     await Manager.push(SessionStates.bill_options, {"bill_id":callback_data.bill_id})
 
-    markup = await keyboard.session_edit_bill(callback_data.bill_id)
+    markup = await keyboard.session_open_bill(callback_data.bill_id)
     await query.message.edit_text("Edit bill", reply_markup = markup)
 
 @session_router.callback_query(StateFilter(SessionStates.bill_options), SessionNavigateCallback.filter(F.action == ButtonActions.OPEN_ORDER.value))
 async def session_open_order(query: CallbackQuery, Manager: Manager, callback_data = SessionNavigateCallback):
     await query.answer()
-    await Manager.push(SessionStates.open_order)
+    await Manager.push(SessionStates.open_order, push = True)
 
     order_id = callback_data.order_id
-    markup = 
+    markup = await keyboard.session_show_order(order_id)
+    await query.message.edit_text("Order (Can't be edited!)", reply_markup = markup)
+
 
 @session_router.callback_query(StateFilter(SessionStates.bill_options), SessionNavigateCallback.filter(F.action == ButtonActions.OPEN_BILL.value))
 async def session_open_bill(query: CallbackQuery, Manager: Manager):
@@ -100,27 +104,81 @@ async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, s
     await query.answer()
     await Manager.pop()
     _state_record = await Manager.get()
-    # bill_id = _state_record.data.get("bill_id", None)
-
     await state.set_state(_state_record.state)
 
-    keyboard.update(data = await Session.get_activities())
+    markups = Markups()
     
+    def _menu_getter():
+        return user
 
-    markups = {
-        "MenuStates:menu":await MenuKeyboards().menu_keyboard(user = user),
-        "SessionStates:menu":await keyboard.session_menu(session),
-        "SessionStates:activities":await keyboard.session_activities(),
-        # "SessionStates:bill_options":await keyboard.session_edit_bill(bill_id)
-    }
+    async def _on_activities():
+        keyboard.update(data = await Session.get_activities())
 
-    reply_text = {
-        "MenuStates:menu":"Menu",
-        "SessionStates:menu":"Session",
-        "SessionStates:activities":"Session activities",
-        # "SessionStates:bill_options":"Edit bill"
-    }
+    async def _session_activities_getter():
+        return await Manager.get_data(key = "current_page")
 
-    text = reply_text.get(_state_record.state)
-    markup = markups.get(_state_record.state)
-    await query.message.edit_text(text = text, reply_markup = markup) 
+
+    def _session_menu_getter():
+        return session
+    
+    async def _session_open_bill_getter():
+        return await Manager.get_data(key = "bill_id")
+
+    markups.register(
+        StateKeyboard(
+            filtr = onState("MenuStates:menu"), 
+            text = "Menu", 
+            keyboard = MenuKeyboards().menu_keyboard, 
+            getter = _menu_getter
+        )
+    )
+
+    markups.register(
+        StateKeyboard(
+            filtr = onState("SessionStates:menu"), 
+            text = "Session", 
+            keyboard = keyboard.session_menu, 
+            getter = _session_menu_getter
+        )
+    )
+
+    markups.register(
+        StateKeyboard(
+            filtr = onState("SessionStates:activities"), 
+            text = "Session activities", 
+            keyboard = keyboard.session_activities, 
+            getter = _session_activities_getter,
+            on_call = _on_activities
+        )
+    )
+    
+    markups.register(
+            StateKeyboard(
+                filtr = onState("SessionStates:bill_options"), 
+                text = "Edit bill", 
+                keyboard = keyboard.session_open_bill, 
+                getter = _session_open_bill_getter
+            )
+        )
+
+    # bill_id = await Manager.get_data("bill_id") if await Manager.get_data("bill_id") else None
+
+
+    # markups = {
+    #     "MenuStates:menu":await MenuKeyboards().menu_keyboard(user = user),
+    #     "SessionStates:menu":await keyboard.session_menu(session),
+    #     "SessionStates:activities":await keyboard.session_activities(),
+    #     "SessionStates:bill_options":await keyboard.session_open_bill(bill_id) if bill_id else None
+    # }
+
+    # reply_text = {
+    #     "MenuStates:menu":"Menu",
+    #     "SessionStates:menu":"Session",
+    #     "SessionStates:activities":"Session activities",
+    #     "SessionStates:bill_options":"Edit bill"
+    # }
+
+    # text = reply_text.get(_state_record.state)
+    # markup = markups.get(_state_record.state)
+    result = await markups.get_markup(_state_record.state)
+    await query.message.edit_text(text = result["text"], reply_markup = result["keyboard"])

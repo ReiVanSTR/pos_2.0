@@ -8,7 +8,7 @@ from ..misc.history_manager import Manager
 from ..keyboards.callbacks import SessionNavigateCallback, NavigatePageKeyboard
 from ..keyboards.pager import BasicPageGenerator
 from ..enums.keyboards.session_keyboard import ButtonActions
-from ..models import SessionData, Session, ObjectId, Bills, BillData, User, UserData, Order
+from ..models import SessionData, Session, Bills, BillData, User, UserData, Order, Tabacco
 from .tools import get_timedelta
 
 
@@ -101,7 +101,7 @@ class SessionKeyboards(BasicPageGenerator):
         await query.message.edit_text(text = "Session activities: ", reply_markup = markup)
 
 
-    async def session_edit_bill(self, bill_id: str):
+    async def session_open_bill(self, bill_id: str):
         bill: BillData = await Bills.get_bill(bill_id)
         user: UserData = await User.get_user_by_user_id(bill.created_by)
 
@@ -138,4 +138,37 @@ class SessionKeyboards(BasicPageGenerator):
 
         return keyboard.as_markup()
         
+    async def session_show_order(self, order_id: str):
+        keyboard = InlineKeyboardBuilder()
 
+        order = await Order.get_order(order_id = order_id)
+        user = await User.get_user_by_user_id(order.created_by)
+        keyboard.button(
+            text = f"{order.order_name} | Created: {get_timedelta(order.timestamp)} ago ", 
+            callback_data=SessionNavigateCallback(action = ButtonActions.STATIC.value)
+        )
+        keyboard.button(
+            text = f"Created by: {user.username} | {user.post.name}", 
+            callback_data=SessionNavigateCallback(action = ButtonActions.STATIC.value)
+
+        )
+        keyboard.adjust(1, True)
+
+        counter = 1
+        for tabacco in order.cart:
+            cart_keyboard = InlineKeyboardBuilder()
+            tabacco_id, used_weight = list(tabacco.items())[0]
+            tabacco = await Tabacco.get_by_id(tabacco_id)
+            cart_keyboard.button(
+                text = f"{counter}) {tabacco.brand} | {tabacco.label} --> {used_weight}g ", 
+                callback_data=SessionNavigateCallback(action = ButtonActions.STATIC.value)
+            )
+            keyboard.attach(cart_keyboard)
+            counter += 1
+
+        keyboard.attach(InlineKeyboardBuilder().button(
+            text = "<<",
+            callback_data = SessionNavigateCallback(action = ButtonActions.BACK.value)
+        ))
+
+        return keyboard.as_markup()
