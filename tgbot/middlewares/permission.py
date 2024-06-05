@@ -7,12 +7,25 @@ from aiogram.types import Message, CallbackQuery
 from ..keyboards.callbacks import BillsNavigate, MenuNavigateCallback, OrderNavigateCallback
 from ..models import User, Permissions
 
+def parse_command(str: str):
+    if str.startswith("/"):
+        res = str.split(" ")
+        return res[0][1:]
+    
+    return None
+
 class PermissionsMiddleware(BaseMiddleware):
     callback_list = {
             "bills":BillsNavigate,
             "order":OrderNavigateCallback,
             "menu_navigate":MenuNavigateCallback,
         }
+
+    commands_list = [
+        "open_session",
+        "close_session",
+        "push_bills"
+    ]
     
     async def __call__(
         self,
@@ -32,9 +45,14 @@ class PermissionsMiddleware(BaseMiddleware):
                     return await handler(event, data)
                 
                 user = await User.get_user_by_user_id(event.from_user.id)
-               
-                if Permissions.GLOBAL.value in user.permissions:
-                    return await handler(event, data)
+                
+                if isinstance(event, Message):
+                    command = parse_command(event.text)
+
+                    if command:
+                        if command in self.commands_list:
+                            if Permissions.GLOBAL.value in user.permissions:
+                                return await handler(event, data)
                 
                 if callback_data.permissions in user.permissions:
                     return await handler(event, data)
