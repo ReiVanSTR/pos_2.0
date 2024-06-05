@@ -36,23 +36,26 @@ async def session_menu(query: CallbackQuery, Manager: Manager, session: SessionD
 
 
 @session_router.callback_query(StateFilter(SessionStates.menu), SessionNavigateCallback.filter(F.action == ButtonActions.OPEN_SESSION.value))
-async def open_session(query: CallbackQuery, Manager: Manager, logger, session):
+async def open_session(query: CallbackQuery, Manager: Manager, logger):
     await query.answer(text = "Session is opened")
 
     date_object = datetime.now()
 
     session_id = await Session.find_session_by_date(date_object)
-    markup = await keyboard.session_menu(session)
-
+    session = await Session.get_current_session()
 
     if session_id:
         logger.filelog(query.from_user.id, "Opened session", {"date":date_object}) 
         await Session.open_session_by_id(session_id = session_id)
+        session = await Session.get_current_session()
+        markup = await keyboard.session_menu(session)
+
         return await query.message.edit_text("Session", reply_markup = markup)
 
 
     session = await Session.open_session(query.from_user.id)
     logger.filelog(query.from_user.id, "Opened session")
+    markup = await keyboard.session_menu(session)
     
     await query.message.edit_text("Session", reply_markup = markup)
 
