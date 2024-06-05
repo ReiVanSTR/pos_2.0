@@ -8,7 +8,7 @@ from ..misc.history_manager import Manager
 from ..keyboards.callbacks import SessionNavigateCallback, NavigatePageKeyboard
 from ..keyboards.pager import BasicPageGenerator
 from ..enums.keyboards.session_keyboard import ButtonActions
-from ..models import SessionData, Session, Bills, BillData, User, UserData, Order, Tabacco
+from ..models import SessionData, Session, Bills, BillData, User, UserData, Order, Tabacco, Permissions
 from .tools import get_timedelta
 
 
@@ -122,7 +122,7 @@ class SessionKeyboards(BasicPageGenerator):
         
         operation_keyboard = InlineKeyboardBuilder()
         operation_keyboard.button(text = "Open bill",
-                        callback_data = SessionNavigateCallback(action = ButtonActions.OPEN_BILL.value, bill_id = bill._id.__str__()))
+                        callback_data = SessionNavigateCallback(action = ButtonActions.OPEN_BILL.value, bill_id = bill._id.__str__(), permissions = Permissions.SESSION_OPEN_BILL.value))
         
         operation_keyboard.button(text = f"{bill.payment_method}",
                         callback_data = SessionNavigateCallback(action = ButtonActions.CHANGE_PAYMENT_METHOD.value, bill_id = bill._id.__str__())

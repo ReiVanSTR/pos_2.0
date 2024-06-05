@@ -30,6 +30,8 @@ class Permissions(Enum):
     ORDERS_REMOVE_ORDER = "orders_remove_order_access"
     HAND_OVER_BILL = "hand_over_bill_access"
 
+    SESSION_OPEN_BILL = "session_open_bill"
+
     def __repr__(self):
         return self.value
 
