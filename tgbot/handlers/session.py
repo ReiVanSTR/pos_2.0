@@ -128,7 +128,7 @@ async def session_close_session(query: CallbackQuery, Manager: Manager, session:
 @session_router.callback_query(StateFilter(SessionStates.close_session_commit), SessionNavigateCallback.filter(F.action == ButtonActions.CLOSE_SESSION_COMMIT.value))
 async def session_commit_close_session(query: CallbackQuery, Manager: Manager, user: UserData):
     await query.answer()
-    await Manager.goto(SessionStates.menu)
+    await Manager.goto(MenuStates.menu)
 
     await Session.close_current_session(user.user_id)
 
