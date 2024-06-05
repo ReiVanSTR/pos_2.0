@@ -33,6 +33,8 @@ class PermissionsMiddleware(BaseMiddleware):
         event: Message,
         data: Dict[str, Any],
     ) -> Any:
+        
+        user = await User.get_user_by_user_id(event.from_user.id)
 
         if isinstance(event, CallbackQuery):
             prefix = event.data.split(":")[0]
@@ -44,20 +46,23 @@ class PermissionsMiddleware(BaseMiddleware):
                 if not callback_data.permissions:
                     return await handler(event, data)
                 
-                user = await User.get_user_by_user_id(event.from_user.id)
-                
-                if isinstance(event, Message):
-                    command = parse_command(event.text)
-
-                    if command:
-                        if command in self.commands_list:
-                            if Permissions.GLOBAL.value in user.permissions:
-                                return await handler(event, data)
                 
                 if callback_data.permissions in user.permissions:
                     return await handler(event, data)
 
                 await event.answer(text = f"You have not permited to {callback_data.permissions}", show_alert = True)
                 return
+                
+        if isinstance(event, Message):
+            command = parse_command(event.text)
+
+            if command:
+                if command in self.commands_list:
+                    if Permissions.GLOBAL.value in user.permissions:
+                        return await handler(event, data)
+                    
+                    await event.answer("You dont permited to do this!")
+                    return 
+                
             
         return await handler(event, data)
