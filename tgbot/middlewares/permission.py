@@ -46,8 +46,11 @@ class PermissionsMiddleware(BaseMiddleware):
                 if not callback_data.permissions:
                     return await handler(event, data)
                 
+                if Permissions.GLOBAL.value in user.permissions:
+                        return await handler(event, data)
                 
                 if callback_data.permissions in user.permissions:
+                    logging.log(30, user)
                     return await handler(event, data)
 
                 await event.answer(text = f"You have not permited to {callback_data.permissions}", show_alert = True)
