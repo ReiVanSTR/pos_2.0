@@ -5,8 +5,10 @@ from .basic import Basic, ObjectId
 from .bills import Bills, BillData
 from typing import List, Dict, Union
 from datetime import datetime
-from .agregations.count_session_total import pipeline
+from .agregations.count_session_total import get_total
 from .agregations.test import bill_pipeline
+from .agregations.get_session_by_date import get_pipeline
+from datetime import timedelta
 
 @dataclass
 class SessionData():
@@ -36,7 +38,8 @@ class Session(Basic):
         _current_session = await cls._collection.find_one({"is_closed":False})
 
         if _current_session:
-            raise "Only one session can be started!"
+            return "Only one session can be started!"
+        
 
         document: Dict = {
             "start_time":datetime.now(),
@@ -48,13 +51,47 @@ class Session(Basic):
         }
 
         await cls._collection.insert_one(document)
+        return await cls.get_current_session()
     
     @classmethod
-    async def close_session(cls, closed_by: int):
+    async def open_session_by_id(cls, session_id: Union[str, ObjectId]):
+        if isinstance(session_id, str):
+            session_id = ObjectId(session_id)
+
+        await cls._collection.update_one({"_id":session_id}, {"$set":{"is_closed":False}})
+    
+
+    @classmethod
+    async def open_session_by_day(cls, date, user_id):
         """
         :param opened_by: telegram user_id
         """
-        pass
+        _current_session = await cls._collection.find_one({"is_closed":False})
+
+        if _current_session:
+            return "Only one session can be started!"
+        
+        start_time = date + timedelta(hours = 8)
+        end_time = start_time + timedelta(hours = 1)
+        document: Dict = {
+            "start_time":start_time,
+            "end_time":end_time,
+            "opened_by":user_id,
+            "closed_by": None,
+            "is_closed":False,
+            "bills":[],
+        }
+
+        await cls._collection.insert_one(document)
+
+    
+    @classmethod
+    async def close_session(cls, session_id: Union[str, ObjectId], closed_by: int):
+        if isinstance(session_id, str):
+            session_id = ObjectId(session_id)
+
+        await cls._collection.update_one({"_id":session_id}, {"$set":{"is_closed":True, "closed_by":closed_by}})
+
 
     @classmethod
     async def get_current_session(cls):
@@ -70,8 +107,8 @@ class Session(Basic):
         await cls._collection.update_one({"is_closed":False}, {"$push":{"bills":bill_id}}, upsert = True)
 
     @classmethod
-    async def count_total(cls):
-        async for result in cls._collection.aggregate(pipeline):
+    async def count_total(cls, session_id):
+        async for result in cls._collection.aggregate(get_total(session_id = session_id)):
             return result
 
     @classmethod
@@ -103,11 +140,31 @@ class Session(Basic):
     async def count_documents(cls):
         return len(await cls.get_bills())
     
+
     @classmethod
     async def update_session_bills(cls, bills_list: List[ObjectId]):
         for bill in bills_list:
             await cls.push_bill(bill)
 
+    @classmethod
+    async def close_current_session(cls, user_id, end_time = None):
+        _current_session = await cls.get_current_session()
+        
+        await cls._collection.update_one({"_id":_current_session._id}, {"$set":{"is_closed":True, "closed_by":user_id, "end_time":datetime.now()}})
 
+
+    @classmethod
+    async def find_session_by_date(cls, date):
+        pipeline = get_pipeline(date)
+        result = cls._collection.aggregate(pipeline)
+
+        if result:
+            session = []
+            async for res in result:
+                session.append(res)
+
+            return session[0]["_id"] if session else None
+
+        return None
 
 Session.set_collection("sessions")

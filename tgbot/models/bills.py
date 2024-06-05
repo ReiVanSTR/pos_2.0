@@ -4,6 +4,7 @@ from pydantic import Field
 from typing import List, Union
 from .basic import ObjectId, Basic
 import logging
+from .agregations.bills_by_date import get_bills_by_date
 
 
 @dataclass
@@ -98,6 +99,16 @@ class Bills(Basic):
             bill_id = ObjectId(bill_id)
 
         await cls._collection.update_one({"_id":bill_id}, {"$set":{"is_closed":False, "payment_method":"cash"}})
+
+    @classmethod
+    async def get_bills_by_date(cls, date: str):
+        pipeline = get_bills_by_date(date)
+
+        result = []
+        async for item in cls._collection.aggregate(pipeline):
+            result.append(item)
+
+        return result
     
 
 Bills.set_collection('bills')

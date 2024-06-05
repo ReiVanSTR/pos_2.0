@@ -60,3 +60,5 @@ class SessionStates(StatesGroup):
     activities = State()
     bill_options = State()
     open_order = State()
+    change_payment_method = State()
+    close_session_commit = State()

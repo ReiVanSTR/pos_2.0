@@ -6,7 +6,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery
 from aiogram.dispatcher.event.handler import CallableObject, HandlerObject
 
-from ..models import SessionData, Session
+from ..models import SessionData, Session, Permissions
 from ..handlers.user import user_start
 from ..misc.states import MenuStates, SessionStates
 from ..keyboards.menu import MenuKeyboards
@@ -34,8 +34,12 @@ class SessionMiddleware(BaseMiddleware):
 
         callback_data_exceptions = [
            "menu_navigate:session:open_session_schedules_access",
-           "session:open_session::"
+           "session:open_session:::"
         ]
+
+        if Permissions.GLOBAL.value in user.permissions:
+            return await handler(event, data)
+
 
         if isinstance(event, CallbackQuery):
             logging.log(30, event.data)

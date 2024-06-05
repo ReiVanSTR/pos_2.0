@@ -3,6 +3,7 @@ from aiogram import Router, F
 from aiogram.filters import CommandStart, StateFilter
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
+from pytz import timezone
 
 from .markup import onState, Markups, StateKeyboard
 
@@ -37,11 +38,13 @@ async def session_menu(query: CallbackQuery, Manager: Manager, session: SessionD
 @session_router.callback_query(StateFilter(SessionStates.menu), SessionNavigateCallback.filter(F.action == ButtonActions.OPEN_SESSION.value))
 async def open_session(query: CallbackQuery, Manager: Manager, logger):
     await query.answer(text = "Session is opened")
-    await Session.open_session(query.from_user.id)
+
+    session = await Session.open_session(query.from_user.id)
     logger.filelog(query.from_user.id, "Opened session")
     
-    _current_session = await Session.get_current_session()
-    markup = await keyboard.session_menu(_current_session)
+
+
+    markup = await keyboard.session_menu(session)
     await query.message.edit_text("Session", reply_markup = markup)
 
     
@@ -97,7 +100,34 @@ async def session_open_bill(query: CallbackQuery, Manager: Manager):
 
 @session_router.callback_query(StateFilter(SessionStates.bill_options), SessionNavigateCallback.filter(F.action == ButtonActions.CHANGE_PAYMENT_METHOD.value))
 async def session_change_payment_method(query: CallbackQuery, Manager: Manager):
-    await Manager.push(SessionStates.change_payment_method)
+    await query.answer()
+    # await Manager.push(SessionStates.change_payment_method)
+
+@session_router.callback_query(StateFilter(SessionStates.menu), SessionNavigateCallback.filter(F.action == ButtonActions.CLOSE_SESSION.value))
+async def session_close_session(query: CallbackQuery, Manager: Manager, session: SessionData):
+    await query.answer()
+    await Manager.push(SessionStates.close_session_commit)
+
+    markup = await keyboard.close_session_commit(session_data = session)
+
+    await query.message.edit_text("Close session commit", reply_markup = markup)
+
+
+@session_router.callback_query(StateFilter(SessionStates.close_session_commit), SessionNavigateCallback.filter(F.action == ButtonActions.CLOSE_SESSION_COMMIT.value))
+async def session_commit_close_session(query: CallbackQuery, Manager: Manager, user: UserData):
+    await query.answer()
+    await Manager.goto(SessionStates.menu)
+
+    await Session.close_current_session(user.user_id)
+
+    markup = await MenuKeyboards().menu_keyboard(user)
+
+    await query.message.edit_text(f"Hello, {user.username}", reply_markup = markup)
+
+
+
+
+
 
 @session_router.callback_query(SessionNavigateCallback.filter(F.action == ButtonActions.BACK.value))
 async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, state: FSMContext, session):
@@ -116,7 +146,6 @@ async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, s
 
     async def _session_activities_getter():
         return await Manager.get_data(key = "current_page")
-
 
     def _session_menu_getter():
         return session
@@ -161,24 +190,5 @@ async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, s
             )
         )
 
-    # bill_id = await Manager.get_data("bill_id") if await Manager.get_data("bill_id") else None
-
-
-    # markups = {
-    #     "MenuStates:menu":await MenuKeyboards().menu_keyboard(user = user),
-    #     "SessionStates:menu":await keyboard.session_menu(session),
-    #     "SessionStates:activities":await keyboard.session_activities(),
-    #     "SessionStates:bill_options":await keyboard.session_open_bill(bill_id) if bill_id else None
-    # }
-
-    # reply_text = {
-    #     "MenuStates:menu":"Menu",
-    #     "SessionStates:menu":"Session",
-    #     "SessionStates:activities":"Session activities",
-    #     "SessionStates:bill_options":"Edit bill"
-    # }
-
-    # text = reply_text.get(_state_record.state)
-    # markup = markups.get(_state_record.state)
     result = await markups.get_markup(_state_record.state)
     await query.message.edit_text(text = result["text"], reply_markup = result["keyboard"])

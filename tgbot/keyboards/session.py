@@ -29,7 +29,7 @@ class SessionKeyboards(BasicPageGenerator):
 
     async def session_menu(self, session_data: SessionData):
         keyboard = InlineKeyboardBuilder()
-        session_statistics: Dict[str, Any] = await Session.count_total()
+        session_statistics: Dict[str, Any] = await Session.count_total(session_id = session_data._id)
         if not session_statistics:
             session_statistics = {}
 
@@ -165,6 +165,36 @@ class SessionKeyboards(BasicPageGenerator):
             )
             keyboard.attach(cart_keyboard)
             counter += 1
+
+        keyboard.attach(InlineKeyboardBuilder().button(
+            text = "<<",
+            callback_data = SessionNavigateCallback(action = ButtonActions.BACK.value)
+        ))
+
+        return keyboard.as_markup()
+    
+    async def close_session_commit(self, session_data: SessionData):
+        keyboard = InlineKeyboardBuilder()
+        session_statistics: Dict[str, Any] = await Session.count_total(session_id = session_data._id)
+        if not session_statistics:
+            session_statistics = {}
+
+        keyboard.button(
+            text = f"Session active: {get_timedelta(session_data.start_time)}",
+            callback_data = SessionNavigateCallback(action = ButtonActions.STATIC.value)
+        )
+
+        keyboard.button(
+            text = f"Orders count: {session_statistics.get('total_order', 0)} | Total: {session_statistics.get('total_cost', 0)} pln",
+            callback_data = SessionNavigateCallback(action = ButtonActions.STATIC.value)
+        )
+
+        keyboard.button(
+            text = "Commit close!",
+            callback_data = SessionNavigateCallback(action = ButtonActions.CLOSE_SESSION_COMMIT.value)
+        )
+
+        keyboard.adjust(1, repeat = True)
 
         keyboard.attach(InlineKeyboardBuilder().button(
             text = "<<",

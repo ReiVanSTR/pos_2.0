@@ -1,15 +1,18 @@
 import logging
 from aiogram import Router, F, Dispatcher
-from aiogram.filters import CommandStart, StateFilter
+from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 from typing import Union
 
 
-from ..models.user import UserData
+from ..models import UserData, Session, Bills
 from ..keyboards.menu import MenuKeyboards
 from ..keyboards.callbacks import MenuNavigateCallback
 from ..misc.history_manager import Manager
 from ..misc.cache import Cache
+from datetime import datetime, timedelta
+
+
 
 
 from ..misc.states import MenuStates
@@ -42,3 +45,53 @@ async def user_start(event: Union[Message, CallbackQuery], user: UserData, cache
             await main_query.delete()
         
     await cache.set_main_query(user.user_id, new_query)
+
+
+@menu_router.message(Command("open_session"))
+async def open_session_by_day(message: Message, user, cache, Manager, logger):
+    user_id = message.from_user.id
+    _current_session = await Session.get_current_session()
+    if _current_session:
+        return await message.answer(text = "Close current session!")
+    
+    try:
+        date = message.text.split(" ")[1]
+        date_object = datetime.strptime(date, "%Y-%m-%d")
+        session_id = await Session.find_session_by_date(date_object)
+
+        if session_id:
+            await message.answer(f"Opened session by date {date}")
+            await Session.open_session_by_id(session_id = session_id)
+            return await user_start(message, user, cache, Manager, logger)
+
+        await message.answer(f"Opened session by date {date}")
+        await Session.open_session_by_day(date_object, user.user_id)
+        return await user_start(message, user, cache, Manager, logger)
+            
+    except:
+        await message.answer("Input correctly date in format: '2000-01-01'")
+
+
+@menu_router.message(Command("close_session"))
+async def close_current_session(message: Message, user, cache, Manager, logger):
+    _current_session = await Session.get_current_session()
+
+    await message.answer(f"Closed session by date {_current_session.start_time.isoformat()}")
+
+    await Session.close_session(_current_session._id, user.user_id)
+    return await user_start(message, user, cache, Manager, logger)
+
+@menu_router.message(Command("push_bills"))
+async def push_bills_by_date(message: Message):
+    await message.delete()
+    _current_session = await Session.get_current_session()
+    data = datetime.strftime(_current_session.start_time.date(), "%Y-%m-%d")
+
+    bills_data = await Bills.get_bills_by_date(data)
+
+    if not bills_data:
+        return await message.answer(text = f"Not opened bills in {data}")
+
+    await Session.update_session_bills(bills_list = bills_data[0].get("bills"))
+
+    await message.answer(text = f"Updated session bills with date {data}")

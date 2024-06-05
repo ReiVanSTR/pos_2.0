@@ -2,6 +2,7 @@ import asyncio
 import logging
 import sys
 import os
+import pytz
 
 import betterlogging as bl
 from aiogram import Bot, Dispatcher
@@ -130,9 +131,9 @@ async def main():
     dp.include_routers(*routers_list)
 
     register_global_middlewares(dp, config)
-    
+    timezone = pytz.timezone("Europe/Warsaw")
     await asyncio.gather(
-        dp.start_polling(bot, cache = cache, dp = dp),
+        dp.start_polling(bot, cache = cache, dp = dp, time = timezone),
         start_observers(cache)
     )
    
