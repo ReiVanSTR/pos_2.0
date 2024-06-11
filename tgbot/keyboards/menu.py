@@ -1,6 +1,5 @@
 import logging
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from typing import List, Optional, Dict, Union
 from datetime import datetime
 
 from ..models import User, UserData, Session, Permissions
@@ -8,12 +7,15 @@ from ..models import User, UserData, Session, Permissions
 from .callbacks import MenuNavigateCallback
 from .pager import BasicPageGenerator
 
+import pytz
+timezone = pytz.timezone("Europe/Warsaw")
+
 class MenuKeyboards():
     async def menu_keyboard(self, user: UserData):
         keyboard = InlineKeyboardBuilder()
 
         user_info_button = InlineKeyboardBuilder().button(
-                                                text = f"Logined as {user.username}, {user.post.name}", callback_data = MenuNavigateCallback(button_name = "static"))
+                                                text = f"Logined as {user.username}, {user.post.name}", callback_data = MenuNavigateCallback(button_name = "open_stat"))
         user_info_button.adjust(1)
         keyboard.attach(user_info_button)
 
@@ -45,3 +47,41 @@ class MenuKeyboards():
         return keyboard.as_markup()
 
 
+    async def menu_user_statictics(self):
+        keyboard = InlineKeyboardBuilder()
+        keyboard.button(
+            text = f"Current shif time:",
+            callback_data = MenuNavigateCallback(button_name = "static")
+        )
+        keyboard.button(
+            text = "Close shift",
+            callback_data = MenuNavigateCallback(button_name = "user_statistics")
+        )
+
+        keyboard.button(
+            text = "<<",
+            callback_data = MenuNavigateCallback(button_name = "back")
+        )
+
+        keyboard.adjust(1, repeat = True)
+
+        return keyboard.as_markup()
+
+    async def menu_start_shift(self):
+        keyboard = InlineKeyboardBuilder()
+        keyboard.button(
+            text = f"Now: {datetime.now(tz = timezone).strftime('%D-%H-%M')}",
+            callback_data = MenuNavigateCallback(button_name = "static")
+        )
+        keyboard.button(
+            text = "Open shift",
+            callback_data = MenuNavigateCallback(button_name = "user_statistics")
+        )
+        keyboard.button(
+            text = "<<",
+            callback_data = MenuNavigateCallback(button_name = "back")
+        )
+
+        keyboard.adjust(1, repeat = True)
+
+        return keyboard.as_markup()

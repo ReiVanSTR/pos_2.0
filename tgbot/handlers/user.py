@@ -1,6 +1,6 @@
 import logging
 from aiogram import Router, F, Dispatcher
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.types import Message, CallbackQuery
 from typing import Union
 
@@ -45,6 +45,17 @@ async def user_start(event: Union[Message, CallbackQuery], user: UserData, cache
             await main_query.delete()
         
     await cache.set_main_query(user.user_id, new_query)
+
+@menu_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "back"))
+async def back(event: Union[Message, CallbackQuery], user: UserData, cache: Cache, Manager: Manager, logger):
+    return await user_start(event, user, cache, Manager, logger)
+
+
+@menu_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "open_stat"))
+async def open_shift(query: CallbackQuery):
+    await query.answer()
+    markup = await menu_keyboards.menu_start_shift()
+    await query.message.edit_text(text = "test", reply_markup = markup)
 
 
 @menu_router.message(Command("open_session"))
