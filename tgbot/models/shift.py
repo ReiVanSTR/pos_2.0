@@ -4,7 +4,7 @@ from pydantic import Field
 from datetime import datetime, timedelta
 import pytz
 
-tzinfo = pytz.timezone("Europe/Warsaw")
+# tzinfo = pytz.timezone("Europe/Warsaw")
 from dataclasses import dataclass
 
 @dataclass(frozen = True)
@@ -38,7 +38,7 @@ class Shift(Basic):
 
         document = {
             "user_id":user_id,
-            "start_time": datetime.now(tzinfo),
+            "start_time": datetime.now(),
             "end_time": None,
             "work_time":None,
         }
@@ -54,8 +54,8 @@ class Shift(Basic):
             {
                 '$match': {
                     'end_time': {
-                        '$gte': datetime(date.year, date.month, date.day, 6, 1, 0, tzinfo=tzinfo), 
-                        '$lt': datetime(next_day.year, next_day.month, next_day.day, 6, 0, 0, tzinfo=tzinfo)
+                        '$gte': datetime(date.year, date.month, date.day, 6, 1, 0), #tzinfo=tzinfo), 
+                        '$lt': datetime(next_day.year, next_day.month, next_day.day, 6, 0, 0) # tzinfo=tzinfo)
                     },
                     'user_id': user_id
                 }
@@ -99,17 +99,17 @@ class Shift(Basic):
     async def close_shift(cls, user_id, end_time = None):
         current_shift = await cls.find_current_shift_by_user_id(user_id)
         if current_shift:
-            _current_time = datetime.now(tzinfo)
+            _current_time = datetime.now()
 
             if end_time:
                 _current_time = end_time
 
-            timed = _current_time - tzinfo.localize(current_shift.start_time)
+            timed = _current_time - current_shift.start_time
             hours, reminder = divmod(timed.seconds, 3600)
             minutes, _ = divmod(reminder, 60)
             await cls._collection.update_one(
                 {"_id":current_shift._id},
-                {"$set":{"end_time":datetime.now(tzinfo), "work_time":{"hours":hours, "minutes":minutes}}}
+                {"$set":{"end_time":datetime.now(), "work_time":{"hours":hours, "minutes":minutes}}}
             )
 
         return None
