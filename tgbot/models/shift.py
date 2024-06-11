@@ -3,6 +3,7 @@ from .basic import Basic
 from pydantic import Field
 from datetime import datetime, timedelta
 import pytz
+import logging
 
 tzinfo = pytz.timezone("Europe/Warsaw")
 from dataclasses import dataclass
@@ -38,7 +39,7 @@ class Shift(Basic):
 
         document = {
             "user_id":user_id,
-            "start_time": datetime.now(tz = tzinfo),
+            "start_time": datetime.now(pytz.utc),
             "end_time": None,
             "work_time":None,
         }
@@ -99,17 +100,17 @@ class Shift(Basic):
     async def close_shift(cls, user_id, end_time = None):
         current_shift = await cls.find_current_shift_by_user_id(user_id)
         if current_shift:
-            _current_time = datetime.now()
+            _current_time = datetime.now(pytz.utc)
 
             if end_time:
                 _current_time = end_time
 
-            timed = _current_time - current_shift.start_time
+            timed = _current_time - pytz.utc.localize(current_shift.start_time)
             hours, reminder = divmod(timed.seconds, 3600)
             minutes, _ = divmod(reminder, 60)
             await cls._collection.update_one(
                 {"_id":current_shift._id},
-                {"$set":{"end_time":datetime.now(), "work_time":{"hours":hours, "minutes":minutes}}}
+                {"$set":{"end_time":_current_time, "work_time":{"hours":hours, "minutes":minutes}}}
             )
 
         return None
