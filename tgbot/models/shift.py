@@ -4,7 +4,7 @@ from pydantic import Field
 from datetime import datetime, timedelta
 import pytz
 
-# tzinfo = pytz.timezone("Europe/Warsaw")
+tzinfo = pytz.timezone("Europe/Warsaw")
 from dataclasses import dataclass
 
 @dataclass(frozen = True)
@@ -38,7 +38,7 @@ class Shift(Basic):
 
         document = {
             "user_id":user_id,
-            "start_time": datetime.now(),
+            "start_time": datetime.now(tz = tzinfo),
             "end_time": None,
             "work_time":None,
         }
