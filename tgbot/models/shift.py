@@ -23,10 +23,19 @@ class Shift(Basic):
     work_time: datetime 
     user_id: int
 
+    @classmethod
+    async def is_exists(cls, user_id: int) -> bool:
+        result = await cls._collection.find_one({"user_id":user_id})
 
+        return True if result else False
 
     @classmethod
     async def open_shift(cls, user_id: int):
+        is_exists =  await cls.is_exists(user_id)
+
+        if is_exists:
+            return None
+
         document = {
             "user_id":user_id,
             "start_time": datetime.now(tzinfo),
@@ -34,7 +43,8 @@ class Shift(Basic):
             "work_time":None,
         }
 
-        await cls._collection.insert_one(document)
+        inserted_id = await cls._collection.insert_one(document)
+        return inserted_id
 
 
     @classmethod
@@ -90,8 +100,10 @@ class Shift(Basic):
         current_shift = await cls.find_current_shift_by_user_id(user_id)
         if current_shift:
             _current_time = datetime.now(tzinfo)
+
             if end_time:
                 _current_time = end_time
+
             timed = _current_time - tzinfo.localize(current_shift.start_time)
             hours, reminder = divmod(timed.seconds, 3600)
             minutes, _ = divmod(reminder, 60)

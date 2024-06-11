@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 from typing import Union
 
 
-from ..models import UserData, Session, Bills
+from ..models import UserData, Session, Bills, Shift
 from ..keyboards.menu import MenuKeyboards
 from ..keyboards.callbacks import MenuNavigateCallback
 from ..misc.history_manager import Manager
@@ -52,10 +52,36 @@ async def back(event: Union[Message, CallbackQuery], user: UserData, cache: Cach
 
 
 @menu_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "open_stat"))
-async def open_shift(query: CallbackQuery):
+async def menu_open_shift_menu(query: CallbackQuery, user: UserData):
     await query.answer()
-    markup = await menu_keyboards.menu_start_shift()
+    _current_shift = await Shift.find_current_shift_by_user_id(user.user_id)
+
+    if _current_shift:
+        markup = await menu_keyboards.menu_user_statictics(_current_shift)
+    else:
+        markup = await menu_keyboards.menu_start_shift()
     await query.message.edit_text(text = "test", reply_markup = markup)
+
+
+@menu_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "user_statistics"))
+async def menu_open_shift(query: CallbackQuery, user: UserData):
+    await query.answer()
+    await Shift.open_shift(user.user_id)
+    _current_shift = await Shift.find_current_shift_by_user_id(user.user_id)
+    markup = await menu_keyboards.menu_user_statictics(_current_shift)
+
+    await query.message.edit_text(text = "test", reply_markup = markup)
+
+
+@menu_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "user_statistics_close"))
+async def menu_close_shift(query: CallbackQuery, user: UserData):
+    await query.answer()
+    await Shift.close_shift(user.user_id)
+
+    markup = await menu_keyboards.menu_keyboard(user)
+
+    await query.message.edit_text(text = "Menu", reply_markup = markup)
+
 
 
 @menu_router.message(Command("open_session"))
