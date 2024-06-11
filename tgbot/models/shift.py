@@ -25,7 +25,7 @@ class Shift(Basic):
 
     @classmethod
     async def is_exists(cls, user_id: int) -> bool:
-        result = await cls._collection.find_one({"user_id":user_id})
+        result = await cls._collection.find_one({"user_id":user_id, "end_time":None})
 
         return True if result else False
 
