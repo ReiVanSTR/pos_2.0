@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 from typing import Union
 
 
-from ..models import UserData, Session, Bills, Shift
+from ..models import UserData, Session, Bills, Shift, User
 from ..keyboards.menu import MenuKeyboards
 from ..keyboards.callbacks import MenuNavigateCallback
 from ..misc.history_manager import Manager
@@ -76,7 +76,8 @@ async def menu_open_shift(query: CallbackQuery, user: UserData):
 @menu_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "user_statistics_close"))
 async def menu_close_shift(query: CallbackQuery, user: UserData):
     await query.answer()
-    await Shift.close_shift(user.user_id)
+    shift_id = await Shift.close_shift(user.user_id)
+    await User.update_shift(user.user_id, shift_id)
 
     markup = await menu_keyboards.menu_keyboard(user)
 

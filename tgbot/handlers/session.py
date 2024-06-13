@@ -11,7 +11,7 @@ from ..keyboards.callbacks import MenuNavigateCallback, SessionNavigateCallback,
 from ..keyboards.session import SessionKeyboards
 from ..keyboards.menu import MenuKeyboards
 from ..models.user import UserData
-from ..models import SessionData, Session, Bills, Order, Tabacco
+from ..models import SessionData, Session, Bills, Order, Tabacco, Shift
 from ..misc.history_manager import Manager
 from ..misc.cache import Cache
 from ..misc.states import SessionStates, MenuStates
@@ -127,9 +127,20 @@ async def session_close_session(query: CallbackQuery, Manager: Manager, session:
 
 @session_router.callback_query(StateFilter(SessionStates.close_session_commit), SessionNavigateCallback.filter(F.action == ButtonActions.CLOSE_SESSION_COMMIT.value))
 async def session_commit_close_session(query: CallbackQuery, Manager: Manager, user: UserData):
+    
+    _opened_shifts = await Shift.find_opened_shifts()
+    _opened_bills = await Session.count_documents()
+
+    if _opened_shifts:
+        await query.answer(text = "Shifts not closed!", show_alert = True)
+        return
+    
+    if _opened_bills:
+        await query.answer(text = f"Close all bills! Opened: {_opened_bills}", show_alert = True)
+        return
+
     await query.answer()
     await Manager.goto(MenuStates.menu)
-
     await Session.close_current_session(user.user_id)
 
     markup = await MenuKeyboards().menu_keyboard(user)
@@ -142,7 +153,7 @@ async def session_commit_close_session(query: CallbackQuery, Manager: Manager, u
 
 
 @session_router.callback_query(SessionNavigateCallback.filter(F.action == ButtonActions.BACK.value))
-async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, state: FSMContext, session):
+async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, state: FSMContext):
     await query.answer()
     await Manager.pop()
     _state_record = await Manager.get()
@@ -159,8 +170,8 @@ async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, s
     async def _session_activities_getter():
         return await Manager.get_data(key = "current_page")
 
-    def _session_menu_getter():
-        return session
+    async def _session_menu_getter():
+        return await Session.get_current_session()
     
     async def _session_open_bill_getter():
         return await Manager.get_data(key = "bill_id")

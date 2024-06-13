@@ -96,5 +96,9 @@ class User(Basic):
     async def grand_permission(cls, user_id, permission: Permissions):
         await cls._collection.update_one({"user_id":user_id}, {"$push":{"permissions":permission.value}})
 
+    @classmethod
+    async def update_shift(cls, user_id: int, shift_id: ObjectId):
+        await cls._collection.update_one({"user_id":user_id}, {"$push":{"work_hours":shift_id}})
+
     
 User.set_collection("Users")

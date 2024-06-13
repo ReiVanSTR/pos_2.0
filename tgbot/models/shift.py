@@ -3,7 +3,6 @@ from .basic import Basic
 from pydantic import Field
 from datetime import datetime, timedelta
 import pytz
-import logging
 
 tzinfo = pytz.timezone("Europe/Warsaw")
 from dataclasses import dataclass
@@ -55,7 +54,7 @@ class Shift(Basic):
             {
                 '$match': {
                     'end_time': {
-                        '$gte': datetime(date.year, date.month, date.day, 6, 1, 0), #tzinfo=tzinfo), 
+                        '$gte': datetime(date.year, date.month, date.day, 0, 0, 0), #tzinfo=tzinfo), 
                         '$lt': datetime(next_day.year, next_day.month, next_day.day, 6, 0, 0) # tzinfo=tzinfo)
                     },
                     'user_id': user_id
@@ -97,24 +96,46 @@ class Shift(Basic):
         return None
     
     @classmethod
-    async def close_shift(cls, user_id, end_time = None):
+    async def close_shift(cls, user_id):
+        _work_time = await cls.current_shift_time(user_id)
+        _current_shift = await cls.find_current_shift_by_user_id(user_id)
+        _current_time = datetime.now(pytz.utc)
+        if _work_time:
+            await cls._collection.update_one(
+                {"_id":_current_shift._id},
+                {"$set":{"end_time":_current_time, "work_time":{"hours":_work_time.get("hours"), "minutes":_work_time.get("minutes")}}}
+            )
+
+            return _current_shift._id
+
+        return None
+
+
+    @classmethod
+    async def current_shift_time(cls, user_id):
         current_shift = await cls.find_current_shift_by_user_id(user_id)
         if current_shift:
             _current_time = datetime.now(pytz.utc)
 
-            if end_time:
-                _current_time = end_time
-
             timed = _current_time - pytz.utc.localize(current_shift.start_time)
             hours, reminder = divmod(timed.seconds, 3600)
             minutes, _ = divmod(reminder, 60)
-            await cls._collection.update_one(
-                {"_id":current_shift._id},
-                {"$set":{"end_time":_current_time, "work_time":{"hours":hours, "minutes":minutes}}}
-            )
 
+            return {"hours":hours, "minutes":minutes}
+        
         return None
+    
+    @classmethod
+    async def find_opened_shifts(cls):
+        date = datetime.now(pytz.utc)
+        response = await cls._collection.find_one(
+            {"start_time": {"$gte": date}, "end_time":None}
+        )
 
+        if response:
+            return True
+        
+        return False
 
 
 

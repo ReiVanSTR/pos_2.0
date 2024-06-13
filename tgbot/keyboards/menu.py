@@ -2,7 +2,7 @@ import logging
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from datetime import datetime
 
-from ..models import User, UserData, Session, Permissions, ShiftData
+from ..models import User, UserData, Session, Permissions, Shift
 
 from .callbacks import MenuNavigateCallback
 from .pager import BasicPageGenerator
@@ -47,10 +47,11 @@ class MenuKeyboards():
         return keyboard.as_markup()
 
 
-    async def menu_user_statictics(self, shift: ShiftData):
+    async def menu_user_statictics(self, user: UserData):
+        _work_time = await Shift.current_shift_time(user.user_id)
         keyboard = InlineKeyboardBuilder()
         keyboard.button(
-            text = f"Current shift time:",
+            text = f"Current shift time: {_work_time.get('hours')}h {_work_time.get('minutes')}m",
             callback_data = MenuNavigateCallback(button_name = "static")
         )
         keyboard.button(
