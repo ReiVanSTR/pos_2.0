@@ -58,9 +58,11 @@ async def menu_open_shift_menu(query: CallbackQuery, user: UserData):
 
     if _current_shift:
         markup = await menu_keyboards.menu_user_statictics(_current_shift)
+        text = "Shift statistics"
     else:
         markup = await menu_keyboards.menu_start_shift()
-    await query.message.edit_text(text = "test", reply_markup = markup)
+        text = "Start shift menu"
+    await query.message.edit_text(text = text, reply_markup = markup)
 
 
 @menu_router.callback_query(StateFilter(MenuStates.menu), MenuNavigateCallback.filter(F.button_name == "user_statistics"))
