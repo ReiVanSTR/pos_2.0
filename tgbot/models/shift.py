@@ -127,9 +127,9 @@ class Shift(Basic):
     
     @classmethod
     async def find_opened_shifts(cls):
-        date = datetime.now(pytz.utc)
+        date = datetime.now(pytz.utc).date()
         response = await cls._collection.find_one(
-            {"start_time": {"$gte": date}, "end_time":None}
+            {"start_time": {"$gte": datetime(date.year, date.month, date.day)}, "end_time":None}
         )
 
         if response:
