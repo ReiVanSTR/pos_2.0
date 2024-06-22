@@ -16,6 +16,9 @@ from ..misc.history_manager import Manager
 from ..misc.cache import Cache
 from ..misc.states import SessionStates, MenuStates
 from ..enums.keyboards.session_keyboard import ButtonActions
+from pytz import timezone
+
+tzinfo = timezone("Europe/Warsaw")
 
 
 session_router = Router()
@@ -39,7 +42,7 @@ async def session_menu(query: CallbackQuery, Manager: Manager, session: SessionD
 async def open_session(query: CallbackQuery, Manager: Manager, logger):
     await query.answer(text = "Session is opened")
 
-    date_object = datetime.now()
+    date_object = datetime.now(tz = tzinfo)
 
     session_id = await Session.find_session_by_date(date_object)
     session = await Session.get_current_session()
