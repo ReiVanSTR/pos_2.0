@@ -45,9 +45,12 @@ class StateKeyboard():
     
 class Markups:
     keyboards: List[StateKeyboard] = []
+    keys: List[str] = []
 
-    def register(self, keyboard: StateKeyboard):
-        self.keyboards.append(keyboard)
+    def register(self, key: str, keyboard: StateKeyboard):
+        if not key in self.keys:
+            self.keys.append(key)
+            self.keyboards.append(keyboard)
 
     async def get_markup(self, state):
         for keyboard in self.keyboards:

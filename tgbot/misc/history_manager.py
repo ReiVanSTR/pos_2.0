@@ -4,6 +4,13 @@ from aiogram.fsm.scene import HistoryManager
 from aiogram.fsm.state import State
 from typing import Any, Dict, Optional, Union
 
+from dataclasses import dataclass, field
+
+@dataclass
+class MemoryStorageRecord:
+    data: Dict[str, Any] = field(default_factory=dict)
+    state: Optional[str] = None
+
 class Manager(HistoryManager):
 
     async def goto(self, go_to: State, push: bool = False):
@@ -83,6 +90,23 @@ class Manager(HistoryManager):
         record_data = history[-1]["data"]
 
         return record_data
+    
+    async def pop(self) -> Optional[MemoryStorageRecord]:
+        history_data = await self._history_state.get_data()
+        history = history_data.setdefault("history", [])
+        if len(history) == 1:
+            return
+
+        if not history:
+            return None
+        record = history.pop()
+        state = record["state"]
+        data = record["data"]
+        if not history:
+            await self._history_state.set_data({})
+        else:
+            await self._history_state.update_data(history=history)
+        return MemoryStorageRecord(state=state, data=data)
     
     async def push_data(self, state: State, data: Dict[str, Any], key: Optional[str] = None, update_dict = False):
         history_data = await self._history_state.get_data()

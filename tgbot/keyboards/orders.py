@@ -1,6 +1,6 @@
 import logging
 from aiogram.fsm.context import FSMContext
-from aiogram.types import InlineKeyboardMarkup, CallbackQuery
+from aiogram.types import InlineKeyboardMarkup, CallbackQuery, Message
 from aiogram.filters.callback_data import CallbackData
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from typing import List, Optional, Dict, Union
@@ -10,7 +10,7 @@ from tgbot import keyboards
 from tgbot.handlers import orders
 
 from ..misc.history_manager import Manager
-from ..models import BillData, OrderData, Order, User,Tabacco, Permissions
+from ..models import BillData, OrderData, Order, User,Tabacco, Permissions, UserData
 
 from .callbacks import BillsCommit, BillsNavigate, OrderNavigateCallback, NavigatePageKeyboard, NumKeyboardCallback, MenuNavigateCallback
 from .pager import BasicPageGenerator
@@ -76,7 +76,7 @@ class OrderKeyboards(BasicPageGenerator):
 
         return keyboard.as_markup()
     
-    def choose_tabacco(self, cart, current_page = 1):
+    def choose_tabacco(self, cart = None, current_page = 1):
         keyboard = InlineKeyboardBuilder()
 
         if not cart:
@@ -132,6 +132,34 @@ class OrderKeyboards(BasicPageGenerator):
                 markup = self.show_num_keyboard(current_num=current_num)
 
         await query.message.edit_text("Input invent weight", reply_markup = markup)
+
+    async def tabacco_filter(self, message: Message, Manager: Manager, cache, user: UserData):
+        logging.log(30, self._cache)
+        main_query = await cache.get_main_query(user.user_id)
+        if not self._cache.get(user.user_id, None):
+            self._cache[user.user_id] = self.data
+
+        cart = await Manager.get_data("cart")
+        if message.text.lower() == "all":
+            _data = self._cache.get(user.user_id, None)
+            if _data:
+                self.update(_data)
+            keyboard = self.choose_tabacco(cart, 1)
+            await message.delete()
+            return await main_query.edit_text("Choose tabacco", reply_markup = keyboard)
+    
+        result = []
+        for item in self._cache.get(user.user_id, self.data):
+            _string = f"{item.brand} {item.label}".lower()
+            if _string.find(message.text.lower()) != -1:
+                result.append(item)
+
+        self.update(result)
+
+        keyboard = self.choose_tabacco(cart, 1)
+        await message.delete()
+        return await main_query.edit_text("Choose tabacco", reply_markup = keyboard)
+        
 
     def show_num_keyboard(self, current_num: Union[int, float] = 0):
         keyboard = InlineKeyboardBuilder(self.page_num_keyboard(callback = NumKeyboardCallback, current_num = current_num).inline_keyboard)

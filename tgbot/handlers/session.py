@@ -11,14 +11,12 @@ from ..keyboards.callbacks import MenuNavigateCallback, SessionNavigateCallback,
 from ..keyboards.session import SessionKeyboards
 from ..keyboards.menu import MenuKeyboards
 from ..models.user import UserData
-from ..models import SessionData, Session, Bills, Order, Tabacco, Shift
+from ..models import SessionData, Session, Bills, Order, Tabacco, Shift, User
 from ..misc.history_manager import Manager
 from ..misc.cache import Cache
 from ..misc.states import SessionStates, MenuStates
 from ..enums.keyboards.session_keyboard import ButtonActions
-from pytz import timezone
-
-tzinfo = timezone("Europe/Warsaw")
+import pytz
 
 
 session_router = Router()
@@ -42,7 +40,7 @@ async def session_menu(query: CallbackQuery, Manager: Manager, session: SessionD
 async def open_session(query: CallbackQuery, Manager: Manager, logger):
     await query.answer(text = "Session is opened")
 
-    date_object = datetime.now(tz = tzinfo)
+    date_object = datetime.now(tz = pytz.utc)
 
     session_id = await Session.find_session_by_date(date_object)
     session = await Session.get_current_session()
@@ -129,8 +127,9 @@ async def session_close_session(query: CallbackQuery, Manager: Manager, session:
 
 
 @session_router.callback_query(StateFilter(SessionStates.close_session_commit), SessionNavigateCallback.filter(F.action == ButtonActions.CLOSE_SESSION_COMMIT.value))
-async def session_commit_close_session(query: CallbackQuery, Manager: Manager, user: UserData):
-    
+async def session_commit_close_session(query: CallbackQuery, Manager: Manager, user: UserData, logger):
+    date_object = datetime.now(tz = pytz.utc)
+
     _opened_shifts = await Shift.find_opened_shifts()
     _opened_bills = await Session.count_documents()
 
@@ -145,10 +144,13 @@ async def session_commit_close_session(query: CallbackQuery, Manager: Manager, u
     await query.answer()
     await Manager.goto(MenuStates.menu)
     await Session.close_current_session(user.user_id)
+    logger.filelog(query.from_user.id, "Closed session", {"date":date_object.isoformat()}) 
 
     markup = await MenuKeyboards().menu_keyboard(user)
 
     await query.message.edit_text(f"Hello, {user.username}", reply_markup = markup)
+
+
 
 
 
@@ -164,7 +166,8 @@ async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, s
 
     markups = Markups()
     
-    def _menu_getter():
+    async def _menu_getter():
+        logging.log(30, user)
         return user
 
     async def _on_activities():
@@ -179,7 +182,7 @@ async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, s
     async def _session_open_bill_getter():
         return await Manager.get_data(key = "bill_id")
 
-    markups.register(
+    markups.register("Menu",
         StateKeyboard(
             filtr = onState("MenuStates:menu"), 
             text = "Menu", 
@@ -188,7 +191,7 @@ async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, s
         )
     )
 
-    markups.register(
+    markups.register("SessionMenu",
         StateKeyboard(
             filtr = onState("SessionStates:menu"), 
             text = "Session", 
@@ -197,7 +200,7 @@ async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, s
         )
     )
 
-    markups.register(
+    markups.register("SessionActivities",
         StateKeyboard(
             filtr = onState("SessionStates:activities"), 
             text = "Session activities", 
@@ -207,7 +210,7 @@ async def session_back(query: CallbackQuery, Manager: Manager, user: UserData, s
         )
     )
     
-    markups.register(
+    markups.register("SessionBillOptions",
             StateKeyboard(
                 filtr = onState("SessionStates:bill_options"), 
                 text = "Edit bill", 
