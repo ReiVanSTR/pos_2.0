@@ -27,8 +27,8 @@ class SessionActiveTime:
 @dataclass(init = False)
 class SessionData:
     session_id: ObjectId
-    opened_by: UserData
-    closed_by: UserData
+    opened_by: SessionEvent
+    closed_by: SessionEvent
     session_active_time: SessionActiveTime
 
     def __init__(self, raw_session_data):
@@ -140,3 +140,7 @@ class SessionReportData:
 
         for shift in raw_data[0]["work_hours"]["shifts"]:
             self.shifts.append(Shift(**shift))
+
+    def find_shift(self, username: str):
+        for shift in self.shifts:
+            return shift if shift.username == username else None

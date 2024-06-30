@@ -3,6 +3,7 @@ from .basic import Basic
 from pydantic import Field
 from datetime import datetime, timedelta
 import pytz
+from typing import Dict
 
 tzinfo = pytz.timezone("Europe/Warsaw")
 from dataclasses import dataclass
@@ -136,7 +137,24 @@ class Shift(Basic):
             return True
         
         return False
+    
+    @classmethod
+    async def create_shift_by_date(cls, user_id, start_time: str, work_time: Dict[str, int]):
+        """
+        :start_time: year-month-dayThours:minutes
+        :work_time: {'hours':1, 'minutes':1}
+        """
+        start_time = datetime.fromisoformat(start_time)
+        end_time = start_time + timedelta(hours = work_time.get("hours"), minutes = work_time.get("minutes"))
+        document = {
+            "user_id":user_id,
+            "start_time": start_time,
+            "end_time": end_time,
+            "work_time":work_time,
+        }
 
+        inserted_id = await cls._collection.insert_one(document)
+        return inserted_id
 
 
 
