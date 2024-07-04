@@ -8,7 +8,7 @@ from datetime import datetime
 
 from tgbot import keyboards
 from tgbot.handlers import orders
-
+from tgbot.misc.cache import Cache
 from ..misc.history_manager import Manager
 from ..models import BillData, OrderData, Order, User,Tabacco, Permissions, UserData
 
@@ -109,6 +109,18 @@ class OrderKeyboards(BasicPageGenerator):
         keyboard.attach(back_button)
 
         return keyboard.as_markup()
+    
+    async def massage_input(self, message: Message, Manager: Manager, user, cache: Cache):
+        main_query = await cache.get_main_query(user.user_id)
+        try:
+            if isinstance(float(message.text.strip()), float):
+                await Manager.update_data("current_num", float(message.text.strip()))
+                markup = self.show_num_keyboard(current_num=float(message.text.strip()))
+        except:
+            markup = self.show_num_keyboard(current_num=0)
+            
+        await message.delete()
+        await main_query.edit_text("Input invent weight", reply_markup = markup) 
 
     async def navigate_page_num_keyboard(self, query: CallbackQuery, callback_data: NumKeyboardCallback, Manager: Manager):
         await query.answer(cache_time=1)

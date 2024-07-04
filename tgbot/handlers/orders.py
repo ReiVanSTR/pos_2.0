@@ -24,6 +24,8 @@ order_keyboars.register_handler(order_keyboars.navigate_page_slider, [NewOrder.n
 order_keyboars.register_handler(order_keyboars.navigate_page_num_keyboard, [NewOrder.choose_tabacco, NumKeyboardCallback.filter(F.action.not_in(["commit"]))])
 order_keyboars.register_handler(order_keyboars.navigate_page_num_keyboard, [NewOrder.edit_weight, NumKeyboardCallback.filter(F.action.not_in(["commit"]))])
 order_keyboars.register_message_handler(order_keyboars.tabacco_filter, [NewOrder.new_hookah, F.text.is_not(None)])
+order_keyboars.register_message_handler(order_keyboars.massage_input, [NewOrder.choose_tabacco, F.text.is_not(None)])
+
 
 @orders_router.callback_query(StateFilter(BillStates.bills_menu), OrderNavigateCallback.filter(F.action == "open_bill"))
 async def orders_open_bill(query: CallbackQuery, cache: Cache, callback_data: OrderNavigateCallback, Manager: Manager):
