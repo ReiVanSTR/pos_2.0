@@ -32,8 +32,9 @@ async def show_bills_menu(query: CallbackQuery, state: FSMContext, Manager: Mana
     await query.answer()
     await Manager.push(BillStates.bills_menu, {"current_page":1})
 
-    
-    keyboards.update(data = await cache.getAllBills(filter = {"is_closed":False}, update = True))
+    data = await Session.get_bills()
+    # keyboards.update(data = await cache.getAllBills(filter = {"is_closed":False}, update = True))
+    keyboards.update(data)
     markup = await keyboards.bills_menu()
 
     await query.message.edit_text("Bills list", reply_markup = markup)

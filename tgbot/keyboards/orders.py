@@ -146,7 +146,7 @@ class OrderKeyboards(BasicPageGenerator):
         await query.message.edit_text("Input invent weight", reply_markup = markup)
 
     async def tabacco_filter(self, message: Message, Manager: Manager, cache, user: UserData):
-        logging.log(30, self._cache)
+        # logging.log(30, self._cache)
         main_query = await cache.get_main_query(user.user_id)
         if not self._cache.get(user.user_id, None):
             self._cache[user.user_id] = self.data

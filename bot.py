@@ -125,7 +125,7 @@ async def main():
     storage = get_storage(config)
     cache = _cache
 
-    bot = Bot(token=config.tg_bot.token, parse_mode="HTML")
+    bot = Bot(token=config.tg_bot.token, parse_mode="HTML",)
     dp = Dispatcher(storage=storage)
 
     dp.include_routers(*routers_list)
@@ -133,7 +133,7 @@ async def main():
     register_global_middlewares(dp, config)
     timezone = pytz.timezone("Europe/Warsaw")
     await asyncio.gather(
-        dp.start_polling(bot, cache = cache, dp = dp, time = timezone),
+        dp.start_polling(bot, cache = cache, dp = dp, time = timezone,),
         start_observers(cache)
     )
    
