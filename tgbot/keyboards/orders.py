@@ -170,7 +170,7 @@ class OrderKeyboards(BasicPageGenerator):
 
         keyboard = self.choose_tabacco(cart, 1)
         await message.delete()
-        return await main_query.edit_text("Choose tabacco", reply_markup = keyboard)
+        return await main_query.message.edit_text("Choose tabacco", reply_markup = keyboard)
         
 
     def show_num_keyboard(self, current_num: Union[int, float] = 0):
