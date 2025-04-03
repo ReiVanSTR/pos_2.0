@@ -31,12 +31,12 @@ class Bills(Basic):
     edited_by: List
 
     @classmethod
-    async def create_bill(cls, bill_name, user_id):
+    async def create_bill(cls, bill_name, user_id, timestamp = None, orders = None):
         document = {
             "bill_name": bill_name,
             "created_by": user_id,
-            "timestamp": datetime.utcnow(),
-            "orders": [],
+            "timestamp": timestamp if timestamp else datetime.utcnow(),
+            "orders": orders if orders else [],
             "is_closed": False,
             "payment_method":"cash",
             "opened_by": [],

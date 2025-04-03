@@ -41,7 +41,6 @@ pure-eval==0.2.2
 pydantic==2.5.2
 pydantic-core==2.14.5
 pygments==2.17.2
-pymongo==4.6.2
 python-dateutil==2.8.2
 python-dotenv==1.0.0
 pyzmq==25.1.2

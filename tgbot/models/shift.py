@@ -4,6 +4,8 @@ from pydantic import Field
 from datetime import datetime, timedelta
 import pytz
 from typing import Dict
+from .agregations.employer_sellings import get_employer_sellings
+
 
 tzinfo = pytz.timezone("Europe/Warsaw")
 from dataclasses import dataclass
@@ -156,6 +158,20 @@ class Shift(Basic):
         inserted_id = await cls._collection.insert_one(document)
         return inserted_id
 
+    
+    @classmethod
+    async def generate_total_report_data(cls, user_id, from_date, to_date):
+        pipeline = get_employer_sellings(user_id, from_date, to_date)
+        result = cls._collection.aggregate(pipeline)
+
+        if result:
+            employer_data = []
+            async for res in result:
+                employer_data.append(res)
+
+            return employer_data
+
+        return None
 
 
 Shift.set_collection("shifts")

@@ -3,6 +3,7 @@ from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 from tgbot.models import ObjectId, Session
+from tgbot.models import Shift as ShiftModel
 from .session_dataclasses import SessionReportData, EmployerSellings, Shift, SessionData
 
 from enum import Enum
@@ -90,6 +91,13 @@ class DocumentBuilder():
                         Koniec sprzedaży: {session_data.closed_by.timestamp} ({session_data.closed_by.user_data.username}) 
                         Łączny czas: {session_data.session_active_time.hours} h {session_data.session_active_time.minutes} min.
         """).font.bold = True
+        
+    def add_session_tabacco_data(self, session_data: SessionReportData):
+        self.add_section_heading(text = f"Uzyty tytoń", aligment = WD_PARAGRAPH_ALIGNMENT.CENTER)
+        paragraf = self.document.add_paragraph()
+        paragraf.add_run(text = f"\n".join([
+            f"{tabacco.label} - {tabacco.total_used}g" for tabacco in session_data.tabacco_data
+        ]))
 
     def add_sesion_total_entry(self, session_data: SessionReportData):
         self.add_section_heading(text = f"Total", aligment = WD_PARAGRAPH_ALIGNMENT.CENTER)
@@ -100,13 +108,49 @@ class DocumentBuilder():
                         Szef: {session_data.total_selling_chief}
                         Użyty tytoń: {session_data.total_tabacco}g
         """)
-
-
+        
+    def add_employer_sellings_table(self, sellings_data):
+        table = self.document.add_table(rows = 1, cols = 7)
+        header_cells_names = ["Data", "Początek Zmiany", "Koniec Zmiany", "Godziny", "Minuty", "Sprzedaż", "Premia od sprzedaży"]
+        for cell in range(len(table.rows[0].cells)):
+            table.rows[0].cells[cell].text = header_cells_names[cell]
+        
+        total_prem = 0
+        
+        for selling in sellings_data.get("shifts"):
+            prem = (selling.get("sellings", 0) * 5) * (2 if selling.get("sellings", 0) >= 10 else 1)
+            total_prem += prem
+            row_cells = table.add_row().cells
+            row_cells[0].text = selling.get("date")
+            row_cells[1].text = selling.get("start_time").strftime("%d-%m-%Y %H:%M")
+            row_cells[2].text = selling.get("end_time").strftime("%d-%m-%Y %H:%M")
+            row_cells[3].text = str(selling.get("hours"))
+            row_cells[4].text = str(selling.get("minutes"))
+            row_cells[5].text = str(selling.get("sellings", 0))
+            row_cells[6].text = str(prem)
+            
+        paragraf = self.document.add_paragraph()
+        paragraf.add_run("\n")
+        self.add_section_heading(text = f"Total", aligment = WD_PARAGRAPH_ALIGNMENT.CENTER)
+        paragraf = self.document.add_paragraph()
+        paragraf.add_run(text = f"""
+                        Godziny: {sellings_data.get("total_hours")}
+                        Minuty: {sellings_data.get("total_minutes")}
+                        Ilość zmian: {len(sellings_data.get("shifts"))}
+                        Rozliczenie według godzin: False
+                        Premia za zmianę: 150 PLN
+                        Łączna premia zmianowa: {len(sellings_data.get("shifts")) * 150}
+                        Premia od sprzedaży: {total_prem}
+        """)
+        
+        
+        
     def save(self, path: str = "./", document_name: str = "document"):
         if path:
             self.path = path
 
         self.document.save(f"{path}/{document_name}.docx")
+        self.document = Document()
 
 class ReportType(Enum):
     CHANGE = "CHANGE_REPORT"
@@ -121,9 +165,9 @@ class Report():
         self.builder = DocumentBuilder()
         self.default_route = "./reports"
 
-    async def generate_change_report(self, session_id: Union[ObjectId, str], user_name: str, filename: str = None):
-        _session_data: SessionReportData = await Session.generate_report_data(session_id = session_id)
-        _generating_date = datetime.now(tz=tzinfo).strftime("%d-%m-%Y %H:%M")
+    async def generate_change_report(self, session_id: Union[ObjectId, str], user_name: str, filename: str = None, session_data = None):
+        _session_data: SessionReportData = await Session.generate_report_data(session_id = session_id) if not session_data else session_data
+        _generating_date = datetime.now(tz=tzinfo).strftime("%d-%m-%Y %H:%M") 
 
         self.builder.add_title(f"Raport zmianowy nr {_session_data.session_data.session_id.__str__()[8:15]}")
         self.builder.add_section_heading(text = f"Data wygenerowania raportu: {_generating_date}. \n Wygenerowany przez: {user_name} \n", aligment=WD_PARAGRAPH_ALIGNMENT.CENTER)
@@ -135,7 +179,7 @@ class Report():
 
             self.builder.add_employer_entry(employer_data, shift)
             self.builder.document.add_page_break()
-
+        self.builder.add_session_tabacco_data(_session_data)
         self.builder.add_sesion_total_entry(_session_data)
 
         document_name = f"raport_zmianowy_{datetime.now(tz=tzinfo).strftime('%d-%m-%Y')}"
@@ -144,5 +188,24 @@ class Report():
             document_name = filename
 
         self.builder.save(path = self.default_route, document_name = document_name)
+        
+    async def generate_employer_report(self, user_id: int, from_date: datetime, to_date: datetime ,user_name: str, filename: str = None):
+        _employer_data = await ShiftModel.generate_total_report_data(user_id, from_date, to_date)
+        if not _employer_data:
+            return 
+        _employer_data = _employer_data[0]
+        _generating_date = datetime.now(tz=tzinfo).strftime("%d-%m-%Y %H:%M") 
+        
+        
+        self.builder.add_title(f"Rozliczenie wypłaty {_employer_data.get('username')}")
+        self.builder.add_section_heading(text = f"Data wygenerowania raportu: {_generating_date}. \n Wygenerowany przez: {user_name} \n", aligment=WD_PARAGRAPH_ALIGNMENT.CENTER)
+        
+        
+        self.builder.add_employer_sellings_table(_employer_data)
+        
+        document_name = f"paski_rozliczeniowe_{_employer_data.get('username')}_{from_date.strftime('%m-%Y')}"
 
+        if filename:
+            document_name = filename
 
+        self.builder.save(path = self.default_route, document_name = document_name)
