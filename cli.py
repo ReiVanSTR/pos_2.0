@@ -4,6 +4,7 @@ from datetime import datetime
 from tgbot.services.reports.builder import builder
 from tgbot.models import Session
 from tgbot.models.agregations.sessions_by_date import get_pipeline
+from ast import literal_eval
 
 __VERSION__ = "1.0.0"
 __USER__ = "Ivan"
@@ -98,7 +99,41 @@ async def employer_report(user_id, from_date, to_date, user):
         click.secho(f"Generated report for {user_id}", fg="green")
         
     except Exception as error:
-        click.secho(f"Error in report generating \nError: {error}", fg="red") 
-        
+        click.secho(f"Error in report generating \nError: {error}", fg="red")
+
+@reports_group.command("employer_add_shift")
+@click.option(
+    "--user_id", prompt = True, type = int
+)
+@click.option(
+    "--date", prompt = "Date [yyyy-mm-dd]", type = str
+)
+@click.option(
+    "--work_time", prompt = "Work time hh:mm", type = str
+)
+@click.option(
+    "--sellings", prompt = "Dict cost:quantity", type = click.UNPROCESSED
+)
+@click.option(
+    "--updated_by", prompt = True, prompt_required = False, default = __USER__, type = str
+)
+async def employer_add_shift(user_id, date, work_time, sellings, updated_by):
+    from tgbot.services.reports.editing import update_session_day
+
+    sellings = literal_eval(sellings)
+    work_time = work_time.split(":")
+    work_time = {
+        "hours":int(work_time[0]),
+        "minutes":int(work_time[1])
+    }
+
+    try:
+        await update_session_day(date, user_id, work_time, sellings)
+        click.secho(f"\n Added new work shift for {user_id}", fg="green")
+    except Exception as e:
+        click.secho(f"\n Error {e}", fg="red")
+
+
+#{50:1, 45:2} 585708940
 if __name__ == "__main__":
     dispatch_cli()

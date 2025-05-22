@@ -14,6 +14,16 @@ class OrderData:
     cost: int
     is_closed: bool = Field(default = False)
 
+    def to_dict(self):
+        return {
+            "order_name": self.order_name,
+            "user_id": self.created_by,
+            "cart": self.cart,
+            "cost": self.cost,
+            "timestamp": self.timestamp
+
+        }
+
 class Order(Basic):
     id: ObjectId = Field(default_factory = ObjectId, alias = "_id")
     order_name: str

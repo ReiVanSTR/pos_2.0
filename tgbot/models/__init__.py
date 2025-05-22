@@ -6,3 +6,4 @@ from .user import User, UserData, Permissions
 from .session import Session, SessionData
 from .basic import ObjectId
 from .shift import Shift, ShiftData
+from .editing_order import EditingOrder
