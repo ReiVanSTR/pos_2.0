@@ -1,0 +1,81 @@
+2025-04-25 22:10:26 - FileLog - 556203989 - Logging in POS - {}
+2025-04-25 22:10:35 - FileLog - 556203989 - Opened session - {}
+2025-04-25 22:10:40 - FileLog - 556203989 - Logging in POS - {}
+2025-04-26 03:28:55 - FileLog - 556203989 - Logging in POS - {}
+2025-04-26 03:29:03 - FileLog - 556203989 - Closed session - {"date": "2025-04-26T01:29:03.453607+00:00"}
+2025-04-26 03:29:09 - FileLog - 556203989 - Logging in POS - {}
+2025-04-26 11:16:12 - FileLog - 511220960 - Logging in POS - {}
+2025-04-26 11:16:15 - FileLog - 556203989 - Logging in POS - {}
+2025-04-26 11:16:18 - FileLog - 511220960 - Logging in POS - {}
+2025-04-26 11:16:23 - FileLog - 511220960 - Logging in POS - {}
+2025-04-26 21:53:45 - FileLog - 511220960 - Logging in POS - {}
+2025-04-26 21:53:50 - FileLog - 511220960 - Opened session - {}
+2025-04-26 21:53:58 - FileLog - 511220960 - Logging in POS - {}
+2025-04-26 22:36:34 - FileLog - 551958194 - Logging in POS - {}
+2025-04-26 23:01:54 - FileLog - 551958194 - Logging in POS - {}
+2025-04-27 00:32:46 - FileLog - 551958194 - Logging in POS - {}
+2025-04-27 02:40:41 - FileLog - 585708940 - Logging in POS - {}
+2025-04-27 03:27:57 - FileLog - 511220960 - Logging in POS - {}
+2025-04-27 03:28:13 - FileLog - 511220960 - Logging in POS - {}
+2025-04-27 03:28:58 - FileLog - 551958194 - Logging in POS - {}
+2025-04-27 03:29:16 - FileLog - 551958194 - Closed session - {"date": "2025-04-27T01:29:15.972413+00:00"}
+2025-04-30 21:50:55 - FileLog - 511220960 - Logging in POS - {}
+2025-04-30 21:50:59 - FileLog - 511220960 - Opened session - {}
+2025-04-30 21:51:07 - FileLog - 511220960 - Logging in POS - {}
+2025-04-30 23:10:47 - FileLog - 511220960 - Logging in POS - {}
+2025-05-01 02:18:09 - FileLog - 511220960 - Logging in POS - {}
+2025-05-01 02:18:37 - FileLog - 511220960 - Logging in POS - {}
+2025-05-01 02:18:46 - FileLog - 511220960 - Closed session - {"date": "2025-05-01T00:18:45.672461+00:00"}
+2025-05-02 00:16:15 - FileLog - 585708940 - Logging in POS - {}
+2025-05-02 00:18:41 - FileLog - 6948795534 - Logging in POS - {}
+2025-05-02 00:18:54 - FileLog - 6948795534 - Opened session - {}
+2025-05-02 21:29:18 - FileLog - 628515065 - Closed session - {"date": "2025-05-02T19:29:18.617360+00:00"}
+2025-05-02 21:29:24 - FileLog - 628515065 - Opened session - {}
+2025-05-02 21:29:36 - FileLog - 628515065 - Logging in POS - {}
+2025-05-02 21:29:38 - FileLog - 628515065 - Logging in POS - {}
+2025-05-02 21:29:41 - FileLog - 628515065 - Logging in POS - {}
+2025-05-02 21:30:28 - FileLog - 628515065 - Logging in POS - {}
+2025-05-02 21:30:30 - FileLog - 628515065 - Logging in POS - {}
+2025-05-02 21:30:35 - FileLog - 628515065 - Logging in POS - {}
+2025-05-02 21:30:39 - FileLog - 628515065 - Logging in POS - {}
+2025-05-02 21:30:44 - FileLog - 628515065 - Logging in POS - {}
+2025-05-02 21:31:00 - FileLog - 628515065 - Logging in POS - {}
+2025-05-02 22:07:01 - FileLog - 511220960 - Logging in POS - {}
+2025-05-02 22:07:04 - FileLog - 511220960 - Logging in POS - {}
+2025-05-03 00:25:29 - FileLog - 511220960 - Logging in POS - {}
+2025-05-03 00:30:44 - FileLog - 511220960 - Logging in POS - {}
+2025-05-03 01:50:36 - FileLog - 628515065 - Logging in POS - {}
+2025-05-03 01:50:42 - FileLog - 511220960 - Logging in POS - {}
+2025-05-03 01:50:52 - FileLog - 628515065 - Closed session - {"date": "2025-05-02T23:50:51.975507+00:00"}
+2025-05-03 21:29:17 - FileLog - 551958194 - Logging in POS - {}
+2025-05-03 21:29:23 - FileLog - 551958194 - Opened session - {}
+2025-05-03 21:30:19 - FileLog - 551958194 - Logging in POS - {}
+2025-05-04 01:33:44 - FileLog - 585708940 - Logging in POS - {}
+2025-05-04 04:07:11 - FileLog - 551958194 - Logging in POS - {}
+2025-05-04 04:07:27 - FileLog - 551958194 - Logging in POS - {}
+2025-05-04 04:07:41 - FileLog - 551958194 - Closed session - {"date": "2025-05-04T02:07:41.133485+00:00"}
+2025-05-04 04:07:47 - FileLog - 551958194 - Logging in POS - {}
+2025-05-08 20:33:10 - FileLog - 511220960 - Logging in POS - {}
+2025-05-08 20:33:26 - FileLog - 511220960 - Opened session - {}
+2025-05-08 20:33:32 - FileLog - 511220960 - Logging in POS - {}
+2025-05-08 20:33:39 - FileLog - 556203989 - Logging in POS - {}
+2025-05-08 20:34:13 - FileLog - 556203989 - Logging in POS - {}
+2025-05-08 20:34:28 - FileLog - 556203989 - Logging in POS - {}
+2025-05-08 20:35:11 - FileLog - 511220960 - Closed session - {"date": "2025-05-08T18:35:10.595549+00:00"}
+2025-05-09 21:51:36 - FileLog - 511220960 - Logging in POS - {}
+2025-05-09 21:51:43 - FileLog - 511220960 - Opened session - {}
+2025-05-09 21:53:57 - FileLog - 511220960 - Logging in POS - {}
+2025-05-09 22:58:38 - FileLog - 511220960 - Logging in POS - {}
+2025-05-10 00:01:45 - FileLog - 511220960 - Logging in POS - {}
+2025-05-10 10:18:54 - FileLog - 511220960 - Logging in POS - {}
+2025-05-10 10:19:03 - FileLog - 511220960 - Closed session - {"date": "2025-05-10T08:19:03.369566+00:00"}
+2025-05-10 22:10:42 - FileLog - 511220960 - Logging in POS - {}
+2025-05-10 22:43:08 - FileLog - 511220960 - Logging in POS - {}
+2025-05-10 22:43:08 - FileLog - 511220960 - Logging in POS - {}
+2025-05-10 22:43:14 - FileLog - 511220960 - Logging in POS - {}
+2025-05-10 22:43:20 - FileLog - 511220960 - Opened session - {}
+2025-05-10 22:43:29 - FileLog - 511220960 - Logging in POS - {}
+2025-05-11 03:57:40 - FileLog - 511220960 - Logging in POS - {}
+2025-05-11 03:57:50 - FileLog - 511220960 - Logging in POS - {}
+2025-05-11 03:57:52 - FileLog - 511220960 - Logging in POS - {}
+2025-05-11 03:59:28 - FileLog - 511220960 - Closed session - {"date": "2025-05-11T01:59:27.995962+00:00"}
