@@ -124,6 +124,7 @@ async def main():
     config = load_config(".env")
     storage = get_storage(config)
     cache = _cache
+    cache
 
     bot = Bot(token=config.tg_bot.token, parse_mode="HTML",)
     dp = Dispatcher(storage=storage)

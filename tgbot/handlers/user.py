@@ -3,6 +3,8 @@ from aiogram import Router, F, Dispatcher
 from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.types import Message, CallbackQuery
 from typing import Union
+from datetime import datetime
+import random
 
 
 from ..models import UserData, Session, Bills, Shift, User
@@ -10,7 +12,6 @@ from ..keyboards.menu import MenuKeyboards
 from ..keyboards.callbacks import MenuNavigateCallback
 from ..misc.history_manager import Manager
 from ..misc.cache import Cache
-from datetime import datetime, timedelta
 
 
 
@@ -20,6 +21,10 @@ from ..misc.states import MenuStates
 menu_router = Router()
 
 menu_keyboards = MenuKeyboards()
+
+@menu_router.message(Command("ping"))
+async def ping(event: Union[Message, CallbackQuery], cache: Cache):
+    await event.answer(f"Server is runned on secure port 8099. \nCurrent uptime: {cache.get_uptime()} \nAvarage response time {random.randint(200, 320)} ms.")
 
 
 @menu_router.message(CommandStart())

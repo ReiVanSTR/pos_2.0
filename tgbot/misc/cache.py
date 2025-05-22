@@ -5,6 +5,7 @@ import logging
 from functools import wraps
 import asyncio
 from cachetools import LRUCache
+from datetime import datetime, timedelta
 
 
 def keygenerator(prefix, key, *args, **kwargs):
@@ -52,6 +53,7 @@ class Cache():
     def __init__(self) -> None:
         self.cache = LRUCache(maxsize=100)
         self.lock = asyncio.Lock()
+        self.start_time = datetime.now().timestamp()
 
 
     # @cachedmethod(cache=lambda self: self.cache, key=partial(keygen, "bills", "all_bills"))
@@ -100,5 +102,16 @@ class Cache():
             self.cache["main_query"][user_id] = query
         except:
             logging.warning(f"Error with update data: {query} with key: {user_id}")
+            
+    def get_uptime(self):
+        now = datetime.now().timestamp()
+        
+        duration_seconds = now - self.start_time
+        duration = timedelta(seconds=duration_seconds)
+        days = duration.days
+        hours, remainder = divmod(duration.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        
+        return f'Days: {days}, Hours: {hours}, Minutes: {minutes}, Seconds: {seconds}'
 
 _cache = Cache()
