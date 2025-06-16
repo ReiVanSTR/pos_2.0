@@ -15,22 +15,38 @@ from tgbot.models.editing_order import EditingOrder
 
 
 
+
 async def update_session_day(session_date: str, user_id: int, work_time: Dict[str, int], sellings: Dict[int, int]):
 
     bills = []
 
-    for cost, quantity in sellings.items():
-        for _ in range(quantity):
-            bills.append(
-                OrderData(
-                     _id = "",
-                    order_name = "Edited Hookah",
-                    created_by = user_id,
-                    timestamp = datetime.fromisoformat(session_date) + timedelta(hours = 8, minutes=5),
-                    cart = [{"66a54931a2b03d9ce8fb085b":16}],
-                    cost = cost
-                )
+    # for cost, quantity in sellings.items():
+
+        # for id in range(quantity):
+        #     _cart = []
+        #     for label,quant in cart[id].items():
+        #         tabacco = await Tabacco.get_by_label(label)
+        #         _cart.append({tabacco._id:quant})
+    for sell in sellings:
+        k,v = sell.items()
+        cost, _, cart = k[0], k[1], v[1]
+
+        _cart = []
+        for item in cart:
+            for label, quantity in item.items():
+                tabacco = await Tabacco.get_by_label(label)
+                _cart.append({tabacco._id.__str__():quantity})
+
+        bills.append(
+            OrderData(
+                _id = "",
+                order_name = "Edited Hookah",
+                created_by = user_id,
+                timestamp = datetime.fromisoformat(session_date) + timedelta(hours = 8, minutes=5),
+                cart = _cart,
+                cost = cost
             )
+        )
 
 
     session_id = await Session.find_session_by_date(datetime.fromisoformat(session_date))
@@ -53,11 +69,13 @@ async def update_session_day(session_date: str, user_id: int, work_time: Dict[st
             Created orders: {order},\n
             Bill {bill} Map: user:{user_id}, timestamp:{datetime.fromisoformat(session_date)+timedelta(hours=8, minutes=3)}
         """, fg="blue")
-        await Bills.close_bill(bill, "cash")
+        await Bills.close_bill(bill, "cash" if not raw_bill.cost == 0 else "chief")
         await Session.update_session_bills([bill])
         click.secho(f"Updated session {session_id} with bill chain {bill}", fg="blue")
-        tabacco = await Tabacco.get_by_id("66a54931a2b03d9ce8fb085b")
-        await Tabacco.update_weight(tabacco._id, tabacco.weight - 10)
-        click.secho(f"Updated tabacco weight 66a54931a2b03d9ce8fb085b", fg="blue")
+        for tabacco in raw_bill.cart:
+            for id, quantity in tabacco.items():
+                tabacco = await Tabacco.get_by_id(id)
+                await Tabacco.update_weight(tabacco._id, tabacco.weight - quantity)
+                click.secho(f"Updated tabacco weight {tabacco.brand}|{tabacco.label} {quantity}g", fg="blue")
     await Session.close_session(session_id, user_id)
     click.secho(f"Closed session by {user_id}, Transaction id: {session_id}", fg="green")

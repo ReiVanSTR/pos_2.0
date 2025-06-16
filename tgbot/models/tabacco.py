@@ -55,7 +55,7 @@ class Tabacco(Basic):
     
     @classmethod
     async def get_by_label(cls, label: str):
-        obj = await cls._collection.find({"label":label})
+        obj = await cls._collection.find_one({"label":label})
         return TabaccoData(**obj) if obj else None
     
     @classmethod

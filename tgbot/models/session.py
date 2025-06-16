@@ -8,7 +8,7 @@ from datetime import datetime
 from .agregations.count_session_total import get_total
 from .agregations.test import bill_pipeline
 from .agregations.get_session_by_date import get_pipeline
-from .agregations.session_report import report_aggregation, total_report_aggregation
+from .agregations.session_report import report_aggregation
 from datetime import timedelta
 from ..services.reports.session_dataclasses import SessionReportData
 
@@ -71,18 +71,19 @@ class Session(Basic):
         _current_session = await cls._collection.find_one({"is_closed":False})
 
         if _current_session:
-            return f"Only one session can be started!"
+            return "Only one session can be started!"
         
         start_time = date + timedelta(hours = 8)
         end_time = start_time + timedelta(hours = 1)
-        document: Dict = {
+
+        document = {
             "start_time":start_time,
             "end_time":end_time,
             "opened_by":user_id,
             "closed_by": None,
             "is_closed":False,
             "bills":[],
-        }
+        } #type: ignore
 
         await cls._collection.insert_one(document)
 
@@ -172,20 +173,6 @@ class Session(Basic):
     @classmethod
     async def generate_report_data(cls, session_id):
         pipeline = report_aggregation(session_id)
-        result = cls._collection.aggregate(pipeline)
-
-        if result:
-            session_data = []
-            async for res in result:
-                session_data.append(res)
-
-            return SessionReportData(session_data) if session_data else None
-
-        return None
-    
-    @classmethod
-    async def generate_total_report_data(cls, from_date, to_date):
-        pipeline = total_report_aggregation(from_date, to_date)
         result = cls._collection.aggregate(pipeline)
 
         if result:

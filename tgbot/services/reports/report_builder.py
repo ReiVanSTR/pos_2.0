@@ -109,7 +109,7 @@ class DocumentBuilder():
                         Użyty tytoń: {session_data.total_tabacco}g
         """)
         
-    def add_employer_sellings_table(self, sellings_data):
+    def add_employer_sellings_table(self, sellings_data, shift_cost: int = 150, hour_price: int = 22, count_by_hours: bool = False, comment: str = None):
         table = self.document.add_table(rows = 1, cols = 7)
         header_cells_names = ["Data", "Początek Zmiany", "Koniec Zmiany", "Godziny", "Minuty", "Sprzedaż", "Premia od sprzedaży"]
         for cell in range(len(table.rows[0].cells)):
@@ -118,7 +118,11 @@ class DocumentBuilder():
         total_prem = 0
         
         for selling in sellings_data.get("shifts"):
-            prem = (selling.get("sellings", 0) * 5) * (2 if selling.get("sellings", 0) >= 10 else 1)
+            sell_min = 10
+            if datetime.fromisoformat(selling.get("date")).weekday() in (4,5):
+                sell_min = 15
+
+            prem = (selling.get("sellings", 0) * 5) * (2 if selling.get("sellings", 0) >= sell_min else 1)
             total_prem += prem
             row_cells = table.add_row().cells
             row_cells[0].text = selling.get("date")
@@ -133,14 +137,25 @@ class DocumentBuilder():
         paragraf.add_run("\n")
         self.add_section_heading(text = f"Total", aligment = WD_PARAGRAPH_ALIGNMENT.CENTER)
         paragraf = self.document.add_paragraph()
+
+        shift_part = f"""
+                Premia za zmianę: {shift_cost} PLN
+                Łączna premia zmianowa: {len(sellings_data.get("shifts")) * 150}
+        """
+
+        hours_part = f"""
+                Stawka godzinowa: {hour_price}
+                Łączna wypłata: {round((sellings_data.get("total_hours") + sellings_data.get("total_minutes")/60) * hour_price, 2)}
+        """
+
         paragraf.add_run(text = f"""
                         Godziny: {sellings_data.get("total_hours")}
                         Minuty: {sellings_data.get("total_minutes")}
                         Ilość zmian: {len(sellings_data.get("shifts"))}
-                        Rozliczenie według godzin: False
-                        Premia za zmianę: 150 PLN
-                        Łączna premia zmianowa: {len(sellings_data.get("shifts")) * 150}
+                        Rozliczenie według godzin: {count_by_hours}
+                            {hours_part if count_by_hours else shift_part}
                         Premia od sprzedaży: {total_prem}
+                        Comment: {comment}
         """)
         
         
@@ -189,7 +204,7 @@ class Report():
 
         self.builder.save(path = self.default_route, document_name = document_name)
         
-    async def generate_employer_report(self, user_id: int, from_date: datetime, to_date: datetime ,user_name: str, filename: str = None):
+    async def generate_employer_report(self, user_id: int, from_date: datetime, to_date: datetime ,user_name: str, filename: str = None, shift_cost: int = 150, hour_price: int = 22, count_by_hours: bool = False, comment: str = None):
         _employer_data = await ShiftModel.generate_total_report_data(user_id, from_date, to_date)
         if not _employer_data:
             return 
@@ -201,7 +216,7 @@ class Report():
         self.builder.add_section_heading(text = f"Data wygenerowania raportu: {_generating_date}. \n Wygenerowany przez: {user_name} \n", aligment=WD_PARAGRAPH_ALIGNMENT.CENTER)
         
         
-        self.builder.add_employer_sellings_table(_employer_data)
+        self.builder.add_employer_sellings_table(_employer_data, shift_cost, hour_price, count_by_hours, comment)
         
         document_name = f"paski_rozliczeniowe_{_employer_data.get('username')}_{from_date.strftime('%m-%Y')}"
 
