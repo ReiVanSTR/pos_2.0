@@ -200,6 +200,28 @@ async def add_tabacco(brand, label, type_id, weight, is_showed):
         await Tabacco.change_visibility(obj_id)
         click.secho(f"Visibility is changed, True", fg="green")
 
+
+@tabacco_group.command("inventarize")
+@click.option(
+    "--label", prompt = "Tabacco label: ", type = str
+)
+async def inventarize_tabacco(label):
+    tabacco = await Tabacco.get_by_label(label)
+    weight = str(click.prompt("Weight: ", default = tabacco.weight, type = str))
+    # return print(type(weight))
+
+    if weight.find("+") == 0:
+        weight = tabacco.weight + float(weight.replace("+",""))
+    
+    elif weight.find("-") == 0:
+        weight = tabacco.weight - float(weight.replace("-",""))
+    
+    try:
+        await Tabacco.update_weight(tabacco._id, weight)
+        click.secho(f"Updated weight for tabacco: {tabacco.label} with weight {weight} ", fg="green")
+    except Exception as e:
+        return click.secho(f"Label: {label} not exists", fg="green")
+
     
 #{50:1, 45:2} 585708940
 if __name__ == "__main__":

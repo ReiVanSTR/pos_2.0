@@ -1,5 +1,6 @@
 from typing import Union
-from motor.motor_tornado import MotorCollection
+from motor.motor_asyncio import AsyncIOMotorCollection
+# from redis.asyncio
 from pydantic import BaseModel
 from loader import db
 import binascii
@@ -23,7 +24,7 @@ class ObjectId(BsonObjectId):
 
 
 class Basic(BaseModel):
-    _collection: MotorCollection = None
+    _collection: AsyncIOMotorCollection = None
 
     @classmethod
     def set_collection(self, collection: str):
