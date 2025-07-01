@@ -134,16 +134,12 @@ async def employer_report(user_id, from_date, to_date, user, by_hours, shift_cos
     "--work_time", prompt = "Work time hh:mm", type = str
 )
 @click.option(
-    "--sellings", prompt = "Dict cost:quantity", type = click.UNPROCESSED
-)
-
-@click.option(
     "--updated_by", prompt = True, prompt_required = False, default = __USER__, type = str
 )
-async def employer_add_shift(user_id, date, work_time, sellings, updated_by):
+async def employer_add_shift(user_id, date, work_time, updated_by):
     from tgbot.services.reports.editing import update_session_day
 
-    sellings = literal_eval(sellings)
+    # sellings = literal_eval(sellings)
     # cart = literal_eval(cart)
     work_time = work_time.split(":")
     work_time = {
@@ -151,6 +147,41 @@ async def employer_add_shift(user_id, date, work_time, sellings, updated_by):
         "minutes":int(work_time[1])
     }
 
+    require_sellings = click.confirm("Add sellings?", default = False, prompt_suffix= "")
+
+    sellings = []
+
+    if require_sellings:
+        while True:
+            hookah_cost = click.prompt(f"[{len(sellings) + 1}]Hookah cost", default = 80, type = int)
+
+            prompt = False
+            cart = []
+            while not prompt:
+                tabacco_label = click.prompt("Tabacco label", type = str)
+                _tabacco = await Tabacco.find_regex("label", tabacco_label)
+
+                if not _tabacco:
+                    click.secho(f"Label: {tabacco_label} not exists", fg="red")
+                    continue
+                
+
+                tabacco = click.prompt("Choose tabacco", type = click.Choice([tabacco.label for tabacco in _tabacco]))
+                quantity = click.prompt(f"Input quantity for {tabacco}", type = float) 
+                cart.append({tabacco:float(quantity)})
+
+                if not click.confirm("Next tabacco?", default = True, prompt_suffix= ""):
+                    prompt = True
+
+            sellings.append({hookah_cost:1, "cart":cart})
+
+            if not click.confirm("Next hookah", default = True, prompt_suffix= ""):
+                    break
+            
+    click.secho(sellings, fg="green")
+    if not click.confirm("Commit?", default = True, prompt_suffix= ""):
+        print("Aborted!")
+        
     try:
         await update_session_day(date, user_id, work_time, sellings)
         click.secho(f"\n Added new work shift for {user_id}", fg="green")
@@ -223,6 +254,46 @@ async def inventarize_tabacco(label):
         return click.secho(f"Label: {label} not exists", fg="green")
 
     
+@tabacco_group.command("test")
+@click.option(
+    "--label", prompt = "Tabacco label: ", type = str
+)
+async def test(label):
+    require_sellings = click.confirm("Add sellings?", default = False, prompt_suffix= "")
+
+    sellings = []
+
+    if require_sellings:
+        while True:
+            hookah_cost = click.prompt(f"[{len(sellings) + 1}]Hookah cost", default = 80, type = int)
+
+            prompt = False
+            cart = []
+            while not prompt:
+                tabacco_label = click.prompt("Tabacco label", type = str)
+                _tabacco = await Tabacco.find_regex("label", tabacco_label)
+
+                if not _tabacco:
+                    click.secho(f"Label: {tabacco_label} not exists", fg="red")
+                    continue
+                
+
+                tabacco = click.prompt("Choose tabacco", type = click.Choice([tabacco.label for tabacco in _tabacco]))
+                quantity = click.prompt(f"Input quantity for {tabacco}", type = int) 
+                cart.append({tabacco:float(quantity)})
+
+                if not click.confirm("Next tabacco?", default = True, prompt_suffix= ""):
+                    prompt = True
+
+            sellings.append({hookah_cost:1, "cart":cart})
+
+            if not click.confirm("Next hookah", default = True, prompt_suffix= ""):
+                    break
+            
+    click.secho(sellings, fg="green")
+    if not click.confirm("Commit?", default = True, prompt_suffix= ""):
+        print("Aborted!")
+
 #{50:1, 45:2} 585708940
 if __name__ == "__main__":
     dispatch_cli()

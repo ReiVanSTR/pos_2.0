@@ -126,7 +126,7 @@ async def main():
     cache = _cache
     cache
 
-    bot = Bot(token=config.tg_bot.token, parse_mode="HTML",)
+    bot = Bot(token=config.tg_bot.token,)
     dp = Dispatcher(storage=storage)
 
     dp.include_routers(*routers_list)

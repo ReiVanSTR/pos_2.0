@@ -84,10 +84,16 @@ class Tabacco(Basic):
     
     @classmethod
     async def find_many(cls, field: str, args: List):
-        if isinstance(field, str):
-            field = ObjectId(field)
+        # if isinstance(field, str):
+        #     field = ObjectId(field)
 
         query = {field: {"$in":args}}
+        return [TabaccoData(**document) async for document in cls._collection.find(query)]
+
+    @classmethod
+    async def find_regex(cls, field: str, arg: str):
+        query = {field: {"$regex": f"^{arg}", "$options": "i"}}
+
         return [TabaccoData(**document) async for document in cls._collection.find(query)]
     
     @classmethod

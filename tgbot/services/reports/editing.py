@@ -56,7 +56,7 @@ async def update_session_day(session_date: str, user_id: int, work_time: Dict[st
 
     if not session_id:
         click.secho(f"Opening session by date {session_date}", fg="green")
-        session = await Session.open_session_by_day(datetime.fromisoformat(session_date), user_id)
+        session_id = await Session.open_session_by_day(datetime.fromisoformat(session_date), user_id)
 
     shift: InsertOneResult = await Shift.create_shift_by_date(user_id, session_date+"T08:00:00", work_time)
     click.secho(f"Created shift {shift} with work time: {work_time}", fg="green")
@@ -69,7 +69,7 @@ async def update_session_day(session_date: str, user_id: int, work_time: Dict[st
             Created orders: {order},\n
             Bill {bill} Map: user:{user_id}, timestamp:{datetime.fromisoformat(session_date)+timedelta(hours=8, minutes=3)}
         """, fg="blue")
-        await Bills.close_bill(bill, "cash" if not raw_bill.cost == 0 else "chief")
+        await Bills.close_bill(bill, "chief" if raw_bill.cost == 0 else "cash")
         await Session.update_session_bills([bill])
         click.secho(f"Updated session {session_id} with bill chain {bill}", fg="blue")
         for tabacco in raw_bill.cart:

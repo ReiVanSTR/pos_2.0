@@ -61,6 +61,7 @@ class Session(Basic):
             session_id = ObjectId(session_id)
 
         await cls._collection.update_one({"_id":session_id}, {"$set":{"is_closed":False}})
+        return session_id.__str__()
     
 
     @classmethod
@@ -85,7 +86,8 @@ class Session(Basic):
             "bills":[],
         } #type: ignore
 
-        await cls._collection.insert_one(document)
+        res = await cls._collection.insert_one(document)
+        return res.inserted_id
 
     
     @classmethod
