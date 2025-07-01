@@ -2,7 +2,7 @@ import asyncclick as click
 from datetime import datetime
 
 from tgbot.services.reports.builder import builder
-from tgbot.models import Session, Tabacco
+from tgbot.models import Session, Tabacco, Invent, Changes
 from tgbot.models.agregations.sessions_by_date import get_pipeline
 from ast import literal_eval
 
@@ -164,9 +164,12 @@ async def employer_add_shift(user_id, date, work_time, updated_by):
                 if not _tabacco:
                     click.secho(f"Label: {tabacco_label} not exists", fg="red")
                     continue
-                
 
-                tabacco = click.prompt("Choose tabacco", type = click.Choice([tabacco.label for tabacco in _tabacco]))
+                tabacco = _tabacco[0].label
+
+                if len(_tabacco) > 1:
+                    tabacco = click.prompt("Choose tabacco", type = click.Choice([tabacco.label for tabacco in _tabacco]))
+                
                 quantity = click.prompt(f"Input quantity for {tabacco}", type = float) 
                 cart.append({tabacco:float(quantity)})
 
@@ -249,6 +252,7 @@ async def inventarize_tabacco(label):
     
     try:
         await Tabacco.update_weight(tabacco._id, weight)
+        await Invent.update_changes(tabacco._id, changes = Changes(_id = 0, timestamp = datetime.now(), user_id = __USER__, expected_weight = item.weight, accepted_weight = _state_record.data.get('current_num')))
         click.secho(f"Updated weight for tabacco: {tabacco.label} with weight {weight} ", fg="green")
     except Exception as e:
         return click.secho(f"Label: {label} not exists", fg="green")
