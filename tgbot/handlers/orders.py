@@ -218,8 +218,31 @@ async def orders_remove_order(query: CallbackQuery, Manager: Manager):
 
 
 @orders_router.callback_query(StateFilter(BillStates.edit_order), OrderNavigateCallback.filter(F.action == "discount_order"))
-async def orders_discount_order():
-    pass
+async def orders_discount_order(query: CallbackQuery, Manager: Manager):
+    order_id = await Manager.get_data("order_id")
+    order = await Order.get_order(order_id)
+
+    if order.discount:
+        await query.answer(text = f"Discount already added!", show_alert = True)
+        return 
+    
+    await query.answer()
+    await Manager.push(BillStates.discount_order)
+    markup = await order_keyboars.show_discount_keyboard()
+    await query.message.edit_text("Choose discount", reply_markup = markup)
+
+@orders_router.callback_query(StateFilter(BillStates.discount_order), OrderNavigateCallback.filter(F.action == "discount"))
+async def orders_append_discount(query: CallbackQuery, Manager: Manager, callback_data: OrderNavigateCallback):
+    await query.answer(text = f"Added discount {callback_data.discount}%", show_alert = True)
+
+    bill_id = await Manager.get_data("bill_id", BillStates.open_bill)
+    order_id = await Manager.get_data("order_id", BillStates.edit_order)
+    await Manager.goto(BillStates.open_bill)
+
+    await Order.discount_order(order_id, int(callback_data.discount))
+
+    markup = await order_keyboars.open_bill(await Bills.get_bill(bill_id))
+    await query.message.edit_text("Open bill", reply_markup = markup)
 
 @orders_router.callback_query(StateFilter(BillStates.edit_order), OrderNavigateCallback.filter(F.action == "save_mix"))
 async def orders_save_mix(query: CallbackQuery, Manager: Manager):
@@ -239,7 +262,10 @@ async def back(query: CallbackQuery, Manager: Manager, state: FSMContext):
 
     cart = await Manager.get_data("cart") if await Manager.get_data("cart") else {}
     bill_id = await Manager.get_data("bill_id") if await Manager.get_data("bill_id") else None
+    order_id = await Manager.get_data("order_id") if await Manager.get_data("order_id") else None
+
     markups = {
+        "BillStates:edit_order":await order_keyboars.show_order_keyboard(order_id) if order_id else None,
         "BillStates:open_bill":await order_keyboars.open_bill(await Bills.get_bill(bill_id)) if bill_id else None,
         "NewOrder:new_order":order_keyboars.new_order(),
         "NewOrder:new_hookah":order_keyboars.choose_tabacco(cart = cart),
@@ -251,6 +277,7 @@ async def back(query: CallbackQuery, Manager: Manager, state: FSMContext):
         "NewOrder:new_order":"New order",
         "NewOrder:new_hookah":"Choose tabacco",
         "NewOrder:open_cart":"Cart",
+        "BillStates:edit_order":"Order"
     }
 
     text = reply_text.get(_state_record.state)

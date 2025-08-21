@@ -44,3 +44,21 @@
 2025-06-29 02:14:30 - FileLog - 628515065 - Logging in POS - {}
 2025-06-29 04:08:38 - FileLog - 628515065 - Logging in POS - {}
 2025-06-29 04:10:48 - FileLog - 628515065 - Closed session - {"date": "2025-06-29T02:10:48.421794+00:00"}
+2025-07-04 21:33:19 - FileLog - 551958194 - Logging in POS - {}
+2025-07-04 21:33:24 - FileLog - 551958194 - Opened session - {}
+2025-07-04 21:33:37 - FileLog - 551958194 - Logging in POS - {}
+2025-07-04 21:33:42 - FileLog - 551958194 - Logging in POS - {}
+2025-07-05 02:23:07 - FileLog - 551958194 - Logging in POS - {}
+2025-07-05 02:23:15 - FileLog - 551958194 - Logging in POS - {}
+2025-07-05 02:23:27 - FileLog - 551958194 - Closed session - {"date": "2025-07-05T00:23:26.787032+00:00"}
+2025-07-05 02:23:39 - FileLog - 551958194 - Logging in POS - {}
+2025-07-05 19:52:23 - FileLog - 628515065 - Logging in POS - {}
+2025-07-05 19:52:26 - FileLog - 628515065 - Opened session - {}
+2025-07-05 19:52:32 - FileLog - 628515065 - Logging in POS - {}
+2025-07-05 21:48:20 - FileLog - 628515065 - Logging in POS - {}
+2025-07-05 21:48:23 - FileLog - 628515065 - Logging in POS - {}
+2025-07-05 21:48:25 - FileLog - 628515065 - Logging in POS - {}
+2025-07-05 21:48:31 - FileLog - 628515065 - Logging in POS - {}
+2025-07-05 23:30:37 - FileLog - 628515065 - Logging in POS - {}
+2025-07-06 03:24:04 - FileLog - 585708940 - Logging in POS - {}
+2025-07-06 03:45:08 - FileLog - 628515065 - Closed session - {"date": "2025-07-06T01:45:07.649343+00:00"}

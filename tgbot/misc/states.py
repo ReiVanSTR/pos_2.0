@@ -37,6 +37,7 @@ class BillStates(StatesGroup):
     options = State()
 
     edit_order = State()
+    discount_order = State()
 
 class MenuStates(StatesGroup):
     menu = State()

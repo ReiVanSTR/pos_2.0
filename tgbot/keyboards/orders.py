@@ -232,6 +232,13 @@ class OrderKeyboards(BasicPageGenerator):
             text = f"Created by: {user.username} | {user.post.name}".ljust(40), 
             callback_data=OrderNavigateCallback(action = "static")
         )
+        
+        if order.discount:
+            keyboard.button(
+                text = f"Discount: {order.discount}%", 
+                callback_data=OrderNavigateCallback(action = "static")
+            )
+
         keyboard.adjust(1, True)
 
         counter = 1
@@ -258,7 +265,7 @@ class OrderKeyboards(BasicPageGenerator):
 
         option_keyboard.button(
             text = "Discount💸",
-            callback_data = OrderNavigateCallback(action = "discount_order")
+            callback_data = OrderNavigateCallback(action = "discount_order",)
         )
 
         option_keyboard.adjust(1,2)
@@ -267,3 +274,27 @@ class OrderKeyboards(BasicPageGenerator):
 
         return keyboard.as_markup()
 
+    async def show_discount_keyboard(self):
+        keyboard = InlineKeyboardBuilder()
+        weekday = datetime.now().isocalendar().weekday
+
+        discount_menu = [
+            {"Rabat 30%":30},
+            {"Rabat 50%": 50},
+            {"Rabat 75%": 75},
+            {"Rabat 100%": 100},
+        ]
+
+        if weekday == 3:  # Tuesday
+            discount_menu.append({"Wtorek 25%":25})
+        if weekday == 4:  # Wednesday  
+            discount_menu.append({"Sroda 25%":25})
+
+        for discount in discount_menu:
+            name, percent = list(discount.items())[0]
+            keyboard.button(text = name, callback_data = OrderNavigateCallback(action = "discount", discount = str(percent)))
+
+        keyboard.adjust(2, repeat=True)
+        keyboard.attach(InlineKeyboardBuilder().button(text = "<<Order<<", callback_data = OrderNavigateCallback(action="back")))
+
+        return keyboard.as_markup()

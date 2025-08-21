@@ -2,7 +2,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from .basic import Basic, ObjectId 
 from pydantic import Field
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 
 @dataclass
 class OrderData:
@@ -13,6 +13,7 @@ class OrderData:
     cart: List[Dict[str, int]]
     cost: int
     is_closed: bool = Field(default = False)
+    discount: Optional[int] = None
 
     def to_dict(self):
         return {
@@ -20,8 +21,8 @@ class OrderData:
             "user_id": self.created_by,
             "cart": self.cart,
             "cost": self.cost,
-            "timestamp": self.timestamp
-
+            "timestamp": self.timestamp,
+            "discount": self.discount
         }
 
 class Order(Basic):
@@ -51,6 +52,21 @@ class Order(Basic):
         if isinstance(order_id, str):
             order_id = ObjectId(order_id)
         return OrderData(**await cls._collection.find_one({"_id":order_id}))
+    
+    @classmethod
+    async def discount_order(cls, order_id: Union[str, ObjectId], discount: int):
+        if isinstance(order_id, str):
+            order_id = ObjectId(order_id)
+
+        order = await cls.get_order(order_id)
+
+        await cls._collection.update_one(
+            {"_id": order_id},
+            {"$set": {
+                "cost": order.cost * (1 - discount / 100),  # Subtracts the discount
+                "discount": discount
+            }}
+        )
     
 
 Order.set_collection('orders')

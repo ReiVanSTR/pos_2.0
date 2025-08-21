@@ -18,6 +18,7 @@ class OrderNavigateCallback(CallbackData, prefix = "order"):
     tabacco_id: Optional[str] = Field(default="")
     cost: Optional[str] = Field(default="")
     permissions: Optional[str] = Field(default="")
+    discount: Optional[str] = Field(default="")
 
 
 

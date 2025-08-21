@@ -1,0 +1,7 @@
+2025-08-21 02:49:20 - FileLog - 585708940 - Logging in POS - {}
+2025-08-21 02:49:24 - FileLog - 585708940 - Opened session - {}
+2025-08-21 02:53:02 - FileLog - 585708940 - Logging in POS - {}
+2025-08-21 02:55:50 - FileLog - 585708940 - Logging in POS - {}
+2025-08-21 02:57:10 - FileLog - 585708940 - Logging in POS - {}
+2025-08-21 03:02:00 - FileLog - 585708940 - Logging in POS - {}
+2025-08-21 03:47:08 - FileLog - 585708940 - Closed session - {"date": "2025-08-21T01:47:08.708383+00:00"}
