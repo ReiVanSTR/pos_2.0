@@ -77,9 +77,10 @@ async def periodic_report(from_date, to_date, user):
     
     click.secho("Sucessful!", fg = "green")
     click.confirm(f"Generate employer reports? ", show_default=True, abort=True)
+    comment = click.prompt("Comment")
     
     for user in set(users):
-        await builder.generate_employer_report(user, from_date,to_date, user)
+        await builder.generate_employer_report(user, from_date,to_date, "Ivan", comment=comment)
         
     click.secho("Sucessful!", fg = "green")
         

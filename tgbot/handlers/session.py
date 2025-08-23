@@ -1,7 +1,7 @@
 import logging
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart, StateFilter
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, Document, InputFile
 from aiogram.fsm.context import FSMContext
 from datetime import datetime
 
@@ -17,6 +17,8 @@ from ..misc.cache import Cache
 from ..misc.states import SessionStates, MenuStates
 from ..enums.keyboards.session_keyboard import ButtonActions
 import pytz
+
+from ..services.reports.builder import Report
 
 
 session_router = Router()
@@ -127,7 +129,7 @@ async def session_close_session(query: CallbackQuery, Manager: Manager, session:
 
 
 @session_router.callback_query(StateFilter(SessionStates.close_session_commit), SessionNavigateCallback.filter(F.action == ButtonActions.CLOSE_SESSION_COMMIT.value))
-async def session_commit_close_session(query: CallbackQuery, Manager: Manager, user: UserData, logger):
+async def session_commit_close_session(query: CallbackQuery, Manager: Manager, user: UserData, logger, bot: Bot):
     date_object = datetime.now(tz = pytz.utc)
 
     _opened_shifts = await Shift.find_opened_shifts()
@@ -143,6 +145,10 @@ async def session_commit_close_session(query: CallbackQuery, Manager: Manager, u
 
     await query.answer()
     await Manager.goto(MenuStates.menu)
+    _current_session = await Session.get_current_session()
+    builder = Report(".")
+    Document()
+    await bot.send_document(query.from_user.id, InputFile("_buffer.docx"), caption = "Session report")
     await Session.close_current_session(user.user_id)
     logger.filelog(query.from_user.id, "Closed session", {"date":date_object.isoformat()}) 
 

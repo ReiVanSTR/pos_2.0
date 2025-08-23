@@ -142,6 +142,28 @@ class Session(Basic):
         return response
     
     @classmethod
+    async def get_bills_by_session_id(cls, session_id: Union[str, ObjectId]):
+        if isinstance(session_id, str):
+            session_id = ObjectId(session_id)
+
+        _current_session = await cls._collection.find_one({"_id":session_id})
+
+        if not _current_session:
+            return f"Session not found {session_id}" 
+        
+        _current_session = SessionData(**_current_session)
+
+        response = []
+        try:
+            for bill in _current_session.bills:
+                bill_data = await Bills.get_bill(bill)
+                response.append(bill_data)
+        except Exception as e:
+            print(e)
+
+        return response
+    
+    @classmethod
     async def count_documents(cls):
         return len(await cls.get_bills())
     

@@ -14,7 +14,7 @@ class EditingOrder(Basic):
     is_closed: bool =  Field(default = False)
 
     @classmethod
-    async def create_order(cls, order_name, user_id, cart, cost, timestamp = None):
+    async def create_order(cls, order_name, user_id, cart, cost, discount, timestamp = None):
         document = {
             "order_name": order_name,
             "created_by": user_id,

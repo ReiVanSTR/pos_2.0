@@ -285,9 +285,9 @@ class OrderKeyboards(BasicPageGenerator):
             {"Rabat 100%": 100},
         ]
 
-        if weekday == 3:  # Tuesday
+        if weekday == 2:  # Tuesday
             discount_menu.append({"Wtorek 25%":25})
-        if weekday == 4:  # Wednesday  
+        if weekday == 3:  # Wednesday  
             discount_menu.append({"Sroda 25%":25})
 
         for discount in discount_menu:

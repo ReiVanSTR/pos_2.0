@@ -160,11 +160,11 @@ class DocumentBuilder():
         
         
         
-    def save(self, path: str = "./", document_name: str = "document"):
+    def save(self, path: str = "./", document_name: str = "document", comment = None):
         if path:
             self.path = path
 
-        self.document.save(f"{path}/{document_name}.docx")
+        self.document.save(f"{path}/{document_name}{comment if comment else ''}.docx")
         self.document = Document()
 
 class ReportType(Enum):
@@ -176,9 +176,9 @@ class ReportType(Enum):
 
 class Report():
 
-    def __init__(self) -> None:
+    def __init__(self, route: str = None) -> None:
         self.builder = DocumentBuilder()
-        self.default_route = "./reports"
+        self.default_route = "./reports" if not route else route
 
     async def generate_change_report(self, session_id: Union[ObjectId, str], user_name: str, filename: str = None, session_data = None):
         _session_data: SessionReportData = await Session.generate_report_data(session_id = session_id) if not session_data else session_data
@@ -223,4 +223,4 @@ class Report():
         if filename:
             document_name = filename
 
-        self.builder.save(path = self.default_route, document_name = document_name)
+        self.builder.save(path = self.default_route, document_name = document_name, comment = comment)
