@@ -1,7 +1,7 @@
 import logging
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart, StateFilter
-from aiogram.types import Message, CallbackQuery, Document, InputFile
+from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.fsm.context import FSMContext
 from datetime import datetime
 
@@ -18,7 +18,7 @@ from ..misc.states import SessionStates, MenuStates
 from ..enums.keyboards.session_keyboard import ButtonActions
 import pytz
 
-from ..services.reports.builder import Report
+from ..services.reports.builder import builder
 
 
 session_router = Router()
@@ -146,10 +146,16 @@ async def session_commit_close_session(query: CallbackQuery, Manager: Manager, u
     await query.answer()
     await Manager.goto(MenuStates.menu)
     _current_session = await Session.get_current_session()
-    builder = Report(".")
-    Document()
-    await bot.send_document(query.from_user.id, InputFile("_buffer.docx"), caption = "Session report")
     await Session.close_current_session(user.user_id)
+
+    await builder.generate_change_report(_current_session._id, "System", "_buffer")
+
+    file = FSInputFile(
+        "reports/_buffer.docx",
+        filename=f"report_{_current_session.start_time}.docx"
+    )
+    await bot.send_document(query.from_user.id, file)
+
     logger.filelog(query.from_user.id, "Closed session", {"date":date_object.isoformat()}) 
 
     markup = await MenuKeyboards().menu_keyboard(user)

@@ -25,7 +25,8 @@ class PermissionsMiddleware(BaseMiddleware):
         "open_session",
         "close_session",
         "push_bills",
-        "ping"
+        "ping",
+        "generate_report"
     ]
     
     async def __call__(

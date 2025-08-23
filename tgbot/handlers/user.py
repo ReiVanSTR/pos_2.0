@@ -1,7 +1,7 @@
 import logging
 from aiogram import Router, F, Dispatcher
 from aiogram.filters import CommandStart, Command, StateFilter
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, FSInputFile, URLInputFile
 from typing import Union
 from datetime import datetime
 import random
@@ -12,11 +12,9 @@ from ..keyboards.menu import MenuKeyboards
 from ..keyboards.callbacks import MenuNavigateCallback
 from ..misc.history_manager import Manager
 from ..misc.cache import Cache
-
-
-
-
 from ..misc.states import MenuStates
+
+from ..services.reports.builder import builder
 
 menu_router = Router()
 
@@ -116,6 +114,23 @@ async def open_session_by_day(message: Message, user, cache, Manager, logger):
     except:
         await message.answer("Input correctly date in format: '2000-01-01'")
 
+
+@menu_router.message(Command("generate_report"), )
+async def generate_session_report(message: Message, user, cache, Manager, logger):
+    try:
+        date = message.text.split(" ")[1]
+
+        date_object = datetime.strptime(date, "%Y-%m-%d")
+        session_id = await Session.find_session_by_date(date_object)
+        await builder.generate_change_report(session_id, "System", "_buffer")
+
+        image = FSInputFile(
+            "reports/_buffer.docx",
+            filename=f"report_{date}.docx"
+        )
+        await message.answer_document(document = image)
+    except Exception as e:
+        print(e)
 
 @menu_router.message(Command("close_session"))
 async def close_current_session(message: Message, user, cache, Manager, logger):
