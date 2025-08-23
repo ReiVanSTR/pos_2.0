@@ -154,6 +154,7 @@ async def session_commit_close_session(query: CallbackQuery, Manager: Manager, u
         "reports/_buffer.docx",
         filename=f"report_{_current_session.start_time}.docx"
     )
+    
     await bot.send_document(query.from_user.id, file)
 
     logger.filelog(query.from_user.id, "Closed session", {"date":date_object.isoformat()}) 
