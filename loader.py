@@ -4,4 +4,4 @@ from motor.motor_tornado import MotorClient
 
 # db = MotorClient(uri)['Main_Storage']
 from motor.motor_tornado import MotorClient
-db = MotorClient("mongodb+srv://reivanstr:admin@test.dz1tzyu.mongodb.net/?retryWrites=true&w=majority&appName=Test")["Main_Storage"]
+db = MotorClient("mongodb+srv://reivanstr:admin@test.dz1tzyu.mongodb.net/?retryWrites=true&w=majority&appName=Test")["CKM_Storage"]

@@ -61,14 +61,14 @@ class DocumentBuilder():
         if len(employer_sellings.bills_by_card) < 1:
             paragraf.add_run(text = f"\t Brak realizowanych transakcji\n") 
         for selling in employer_sellings.bills_by_card:
-            paragraf.add_run(text = f"\t - {selling.bill_name} | {selling.bill_cost} pln. Zamówień: {selling.orders_count}\n").italic = True
+            paragraf.add_run(text = f"\t - [{selling.timestamp.strftime('%d-%m-%Y %H:%M')}] {selling.bill_name} | {selling.bill_cost} pln. Zamówień: {selling.orders_count}\n").italic = True
         paragraf.add_run(text = f"Łączna sprzedaż na kartę: {employer_sellings.card_total}\n\n").font.cs_bold = True
 
         paragraf.add_run(text = "Sprzedaż gotówką:\r").bold = True
         if len(employer_sellings.bills_by_cash) < 1:
             paragraf.add_run(text = f"\t Brak realizowanych transakcji\n") 
         for selling in employer_sellings.bills_by_cash:
-            paragraf.add_run(text = f"\t - {selling.bill_name} | {selling.bill_cost} pln. Zamówień: {selling.orders_count}\n").italic = True
+            paragraf.add_run(text = f"\t - [{selling.timestamp.strftime('%d-%m-%Y %H:%M')}] {selling.bill_name} | {selling.bill_cost} pln. Zamówień: {selling.orders_count} \n").italic = True
         paragraf.add_run(text = f"Łączna sprzedaż gotówką: {employer_sellings.cash_total}\n\n").font.cs_bold = True
 
 
@@ -76,7 +76,7 @@ class DocumentBuilder():
         if len(employer_sellings.chief) < 1:
             paragraf.add_run(text = f"\t Brak realizowanych transakcji\n") 
         for selling in employer_sellings.chief:
-            paragraf.add_run(text = f"\t - {selling.bill_name} | {selling.bill_cost} pln. Zamówień: {selling.orders_count}\n").italic = True
+            paragraf.add_run(text = f"\t - [{selling.timestamp.strftime('%d-%m-%Y %H:%M')}] {selling.bill_name} | {selling.bill_cost} pln. Zamówień: {selling.orders_count}\n").italic = True
         paragraf.add_run(text = f"Łączna sprzedaż wewnętrzna: {employer_sellings.chief_total}\n\n").font.cs_bold = True
 
         paragraf.add_run(text = f"Łączna sprzedaż: {employer_sellings.card_total + employer_sellings.cash_total} pln. (karta + gotówka)\n")
@@ -109,7 +109,7 @@ class DocumentBuilder():
                         Użyty tytoń: {session_data.total_tabacco}g
         """)
         
-    def add_employer_sellings_table(self, sellings_data, shift_cost: int = 150, hour_price: int = 22, count_by_hours: bool = False, comment: str = None):
+    def add_employer_sellings_table(self, sellings_data, shift_cost: int = 150, hour_price: int = 22, count_by_hours: bool = False, comment: str = None, selling_reward: int = 5):
         table = self.document.add_table(rows = 1, cols = 7)
         header_cells_names = ["Data", "Początek Zmiany", "Koniec Zmiany", "Godziny", "Minuty", "Sprzedaż", "Premia od sprzedaży"]
         for cell in range(len(table.rows[0].cells)):
@@ -119,10 +119,19 @@ class DocumentBuilder():
         
         for selling in sellings_data.get("shifts"):
             sell_min = 10
+            prem = 0
+
             if datetime.fromisoformat(selling.get("date")).weekday() in (4,5):
                 sell_min = 15
 
-            prem = (selling.get("sellings", 0) * 5) * (2 if selling.get("sellings", 0) >= sell_min else 1)
+            if selling.get("sellings", 0) >= sell_min:
+                if selling_reward * 2 > 10:
+                    prem = selling.get("sellings", 0) * 10
+                else:
+                    prem = selling.get("sellings", 0) * (selling_reward * 2)
+            else:
+                prem = selling.get("sellings", 0) * selling_reward
+                
             total_prem += prem
             row_cells = table.add_row().cells
             row_cells[0].text = selling.get("date")
@@ -204,7 +213,18 @@ class Report():
 
         self.builder.save(path = self.default_route, document_name = document_name)
         
-    async def generate_employer_report(self, user_id: int, from_date: datetime, to_date: datetime ,user_name: str, filename: str = None, shift_cost: int = 150, hour_price: int = 22, count_by_hours: bool = False, comment: str = None):
+    async def generate_employer_report(self, 
+                                       user_id: int, 
+                                       from_date: datetime, 
+                                       to_date: datetime ,
+                                       user_name: str, 
+                                       filename: str = None, 
+                                       shift_cost: int = 150, 
+                                       hour_price: int = 22, 
+                                       count_by_hours: bool = False, 
+                                       comment: str = None,
+                                       selling_reward: int = 5
+                            ):
         _employer_data = await ShiftModel.generate_total_report_data(user_id, from_date, to_date)
         if not _employer_data:
             return 
@@ -216,7 +236,7 @@ class Report():
         self.builder.add_section_heading(text = f"Data wygenerowania raportu: {_generating_date}. \n Wygenerowany przez: {user_name} \n", aligment=WD_PARAGRAPH_ALIGNMENT.CENTER)
         
         
-        self.builder.add_employer_sellings_table(_employer_data, shift_cost, hour_price, count_by_hours, comment)
+        self.builder.add_employer_sellings_table(_employer_data, shift_cost, hour_price, count_by_hours, comment, selling_reward)
         
         document_name = f"paski_rozliczeniowe_{_employer_data.get('username')}_{from_date.strftime('%m-%Y')}"
 
@@ -224,3 +244,28 @@ class Report():
             document_name = filename
 
         self.builder.save(path = self.default_route, document_name = document_name, comment = comment)
+
+    async def generate_pereodic_report(self, from_date: datetime, to_date: datetime, user_name: str, filename: str = None):
+        _session_data: SessionReportData = await Session.generate_pereodic_report_data(from_date, to_date)
+        _generating_date = datetime.now(tz=tzinfo).strftime("%d-%m-%Y %H:%M")
+
+        self.builder.add_title(f"Raport okresowy {from_date.strftime('%d-%m-%Y')} - {to_date.strftime('%d-%m-%Y')}")
+        self.builder.add_section_heading(
+            text=f"Data wygenerowania raportu: {_generating_date}. \n Wygenerowany przez: {user_name} \n",
+            aligment=WD_PARAGRAPH_ALIGNMENT.CENTER
+        )
+
+
+        for employer_data in _session_data.employer_sellings:
+            shift = _session_data.find_shift(employer_data.employer_name)
+            self.builder.add_employer_entry(employer_data, shift)
+            self.builder.document.add_page_break()
+
+        self.builder.add_session_tabacco_data(_session_data)
+        self.builder.add_sesion_total_entry(_session_data)
+
+        document_name = f"raport_okresowy_{from_date.strftime('%d-%m-%Y')}_{to_date.strftime('%d-%m-%Y')}"
+        if filename:
+            document_name = filename
+
+        self.builder.save(path=self.default_route, document_name=document_name)

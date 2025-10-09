@@ -26,7 +26,8 @@ class PermissionsMiddleware(BaseMiddleware):
         "close_session",
         "push_bills",
         "ping",
-        "generate_report"
+        "generate_report",
+        "generate_employer_report"
     ]
     
     async def __call__(
@@ -61,10 +62,14 @@ class PermissionsMiddleware(BaseMiddleware):
         if isinstance(event, Message):
             command = parse_command(event.text)
 
+            if not command:
+                return await handler(event, data)
+            
             if command:
                 if command in self.commands_list:
                     if command == "ping":
                         return await handler(event, data)
+                    
                     if Permissions.GLOBAL.value in user.permissions:
                         return await handler(event, data)
                     

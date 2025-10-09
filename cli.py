@@ -59,7 +59,7 @@ def users_all():
 async def periodic_report(from_date, to_date, user):
     from_date = datetime.fromisoformat(from_date)
     to_date = datetime.fromisoformat(to_date)
-    _result =  Session._collection.aggregate(get_pipeline(from_date, to_date))
+    _result = Session._collection.aggregate(get_pipeline(from_date, to_date))
     
     if not _result:
         raise ValueError("No data")

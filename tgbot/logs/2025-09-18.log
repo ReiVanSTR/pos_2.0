@@ -1,0 +1,28 @@
+2025-09-18 23:00:50 - FileLog - 585708940 - Logging in POS - {}
+2025-09-18 23:13:01 - FileLog - 585708940 - Logging in POS - {}
+2025-09-19 20:17:14 - FileLog - 556203989 - Logging in POS - {}
+2025-09-19 20:17:22 - FileLog - 556203989 - Opened session - {}
+2025-09-19 20:22:19 - FileLog - 556203989 - Logging in POS - {}
+2025-09-20 04:34:12 - FileLog - 556203989 - Closed session - {"date": "2025-09-20T02:34:11.866682+00:00"}
+2025-09-20 20:40:48 - FileLog - 511220960 - Logging in POS - {}
+2025-09-20 20:41:28 - FileLog - 511220960 - Logging in POS - {}
+2025-09-20 20:41:30 - FileLog - 511220960 - Opened session - {}
+2025-09-20 20:41:38 - FileLog - 511220960 - Logging in POS - {}
+2025-09-21 03:55:06 - FileLog - 511220960 - Logging in POS - {}
+2025-09-21 03:56:53 - FileLog - 511220960 - Logging in POS - {}
+2025-09-21 03:57:01 - FileLog - 511220960 - Closed session - {"date": "2025-09-21T01:57:01.138737+00:00"}
+2025-09-24 00:27:50 - FileLog - 585708940 - Logging in POS - {}
+2025-09-25 01:32:55 - FileLog - 585708940 - Logging in POS - {}
+2025-09-26 21:33:59 - FileLog - 511220960 - Logging in POS - {}
+2025-09-26 21:34:03 - FileLog - 511220960 - Logging in POS - {}
+2025-09-26 21:34:06 - FileLog - 511220960 - Opened session - {}
+2025-09-27 02:09:19 - FileLog - 511220960 - Logging in POS - {}
+2025-09-27 02:09:22 - FileLog - 511220960 - Logging in POS - {}
+2025-09-27 02:09:32 - FileLog - 511220960 - Logging in POS - {}
+2025-09-27 02:11:17 - FileLog - 511220960 - Logging in POS - {}
+2025-09-27 02:11:30 - FileLog - 511220960 - Closed session - {"date": "2025-09-27T00:11:29.896958+00:00"}
+2025-09-27 23:55:04 - FileLog - 585708940 - Logging in POS - {}
+2025-09-28 00:37:58 - FileLog - 556203989 - Logging in POS - {}
+2025-09-28 00:38:01 - FileLog - 556203989 - Opened session - {}
+2025-09-28 00:38:07 - FileLog - 556203989 - Logging in POS - {}
+2025-09-28 02:59:47 - FileLog - 556203989 - Closed session - {"date": "2025-09-28T00:59:47.111536+00:00"}

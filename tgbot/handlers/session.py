@@ -48,7 +48,7 @@ async def open_session(query: CallbackQuery, Manager: Manager, logger):
     session = await Session.get_current_session()
 
     if session_id:
-        logger.filelog(query.from_user.id, "Opened session", {"date":date_object}) 
+        logger.filelog(query.from_user.id, "Opened session", {"date":date_object.isoformat()}) 
         await Session.open_session_by_id(session_id = session_id)
         session = await Session.get_current_session()
         markup = await keyboard.session_menu(session)

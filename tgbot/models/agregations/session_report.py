@@ -54,163 +54,168 @@ def report_aggregation(session_id: Union[str, ObjectId]):
                     }
                 ], 
                 'employer_sellings': [
-                    {
-                        '$lookup': {
-                            'from': 'bills', 
-                            'localField': 'bills', 
-                            'foreignField': '_id', 
-                            'as': 'bills'
-                        }
-                    }, {
-                        '$unwind': '$bills'
-                    }, {
-                        '$lookup': {
-                            'from': 'orders', 
-                            'localField': 'bills.orders', 
-                            'foreignField': '_id', 
-                            'as': 'bills.orders'
-                        }
-                    }, {
-                        '$lookup': {
-                            'from': 'Users', 
-                            'localField': 'bills.created_by', 
-                            'foreignField': 'user_id', 
-                            'as': 'bills.created_by'
-                        }
-                    }, {
-                        '$project': {
-                            '_id': '$bills._id', 
-                            'bill_data': '$bills', 
-                            'bill_cost': {
-                                '$sum': '$bills.orders.cost'
-                            }, 
-                            'orders_count': {
-                                '$size': '$bills.orders'
+                {
+                    '$lookup': {
+                        'from': 'bills', 
+                        'localField': 'bills', 
+                        'foreignField': '_id', 
+                        'as': 'bills'
+                    }
+                }, {
+                    '$unwind': '$bills'
+                }, {
+                    '$lookup': {
+                        'from': 'orders', 
+                        'localField': 'bills.orders', 
+                        'foreignField': '_id', 
+                        'as': 'bills.orders'
+                    }
+                }, {
+                    '$lookup': {
+                        'from': 'Users', 
+                        'localField': 'bills.created_by', 
+                        'foreignField': 'user_id', 
+                        'as': 'bills.created_by'
+                    }
+                }, {
+                    '$project': {
+                        '_id': '$bills._id', 
+                        'bill_data': '$bills', 
+                        'bill_cost': {
+                            '$sum': '$bills.orders.cost'
+                        }, 
+                        'orders_count': {
+                            '$size': '$bills.orders'
+                        }, 
+                        'timestamp': '$bills.timestamp'
+                    }
+                }, {
+                    '$group': {
+                        '_id': {
+                            '$first': '$bill_data.created_by.username'
+                        }, 
+                        'bills': {
+                            '$push': {
+                                'bill_data': '$bill_data', 
+                                'bill_cost': '$bill_cost', 
+                                'orders_count': '$orders_count', 
+                                'timestamp': '$timestamp'
                             }
-                        }
-                    }, {
-                        '$group': {
-                            '_id': {
-                                '$first': '$bill_data.created_by.username'
-                            }, 
-                            'bills': {
-                                '$push': {
-                                    'bill_data': '$bill_data', 
-                                    'bill_cost': '$bill_cost', 
-                                    'orders_count': '$order_count'
+                        }, 
+                        'bills_by_card': {
+                            '$push': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'card'
+                                        ]
+                                    }, 
+                                    'then': {
+                                        'bill_name': '$bill_data.bill_name', 
+                                        'bill_cost': '$bill_cost', 
+                                        'orders_count': '$orders_count', 
+                                        'timestamp': '$timestamp'
+                                    }, 
+                                    'else': '$$REMOVE'
                                 }
-                            }, 
-                            'bills_by_card': {
-                                '$push': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'card'
-                                            ]
-                                        }, 
-                                        'then': {
-                                            'bill_name': '$bill_data.bill_name', 
-                                            'bill_cost': '$bill_cost', 
-                                            'orders_count': '$orders_count'
-                                        }, 
-                                        'else': '$$REMOVE'
-                                    }
-                                }
-                            }, 
-                            'card_total': {
-                                '$sum': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'card'
-                                            ]
-                                        }, 
-                                        'then': '$bill_cost', 
-                                        'else': 0
-                                    }
-                                }
-                            }, 
-                            'bills_by_cash': {
-                                '$push': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'cash'
-                                            ]
-                                        }, 
-                                        'then': {
-                                            'bill_name': '$bill_data.bill_name', 
-                                            'bill_cost': '$bill_cost', 
-                                            'orders_count': '$orders_count'
-                                        }, 
-                                        'else': '$$REMOVE'
-                                    }
-                                }
-                            }, 
-                            'cash_total': {
-                                '$sum': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'cash'
-                                            ]
-                                        }, 
-                                        'then': '$bill_cost', 
-                                        'else': 0
-                                    }
-                                }
-                            }, 
-                            'chief': {
-                                '$push': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'chief'
-                                            ]
-                                        }, 
-                                        'then': {
-                                            'bill_name': '$bill_data.bill_name', 
-                                            'bill_cost': '$bill_cost', 
-                                            'orders_count': '$orders_count'
-                                        }, 
-                                        'else': '$$REMOVE'
-                                    }
-                                }
-                            }, 
-                            'chief_total': {
-                                '$sum': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'chief'
-                                            ]
-                                        }, 
-                                        'then': '$bill_cost', 
-                                        'else': 0
-                                    }
-                                }
-                            }, 
-                            'total_sellings': {
-                                '$sum': {
-                                    '$cond': {
-                                        'if': {
-                                            '$in': [
-                                                '$bill_data.payment_method', [
-                                                    'card', 'cash'
-                                                ]
-                                            ]
-                                        }, 
-                                        'then': '$orders_count', 
-                                        'else': 0
-                                    }
-                                }
-                            }, 
-                            'total_orders': {
-                                '$sum': '$orders_count'
                             }
+                        }, 
+                        'card_total': {
+                            '$sum': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'card'
+                                        ]
+                                    }, 
+                                    'then': '$bill_cost', 
+                                    'else': 0
+                                }
+                            }
+                        }, 
+                        'bills_by_cash': {
+                            '$push': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'cash'
+                                        ]
+                                    }, 
+                                    'then': {
+                                        'bill_name': '$bill_data.bill_name', 
+                                        'bill_cost': '$bill_cost', 
+                                        'orders_count': '$orders_count', 
+                                        'timestamp': '$timestamp'
+                                    }, 
+                                    'else': '$$REMOVE'
+                                }
+                            }
+                        }, 
+                        'cash_total': {
+                            '$sum': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'cash'
+                                        ]
+                                    }, 
+                                    'then': '$bill_cost', 
+                                    'else': 0
+                                }
+                            }
+                        }, 
+                        'chief': {
+                            '$push': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'chief'
+                                        ]
+                                    }, 
+                                    'then': {
+                                        'bill_name': '$bill_data.bill_name', 
+                                        'bill_cost': '$bill_cost', 
+                                        'orders_count': '$orders_count', 
+                                        'timestamp': '$timestamp'
+                                    }, 
+                                    'else': '$$REMOVE'
+                                }
+                            }
+                        }, 
+                        'chief_total': {
+                            '$sum': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'chief'
+                                        ]
+                                    }, 
+                                    'then': '$bill_cost', 
+                                    'else': 0
+                                }
+                            }
+                        }, 
+                        'total_sellings': {
+                            '$sum': {
+                                '$cond': {
+                                    'if': {
+                                        '$in': [
+                                            '$bill_data.payment_method', [
+                                                'card', 'cash'
+                                            ]
+                                        ]
+                                    }, 
+                                    'then': '$orders_count', 
+                                    'else': 0
+                                }
+                            }
+                        }, 
+                        'total_orders': {
+                            '$sum': '$orders_count'
                         }
                     }
-                ], 
+                }
+            ], 
                 'tabacco_data': [
                     {
                         '$lookup': {
@@ -425,163 +430,168 @@ def total_report_aggregation(from_date, to_date):
                     }
                 ], 
                 'employer_sellings': [
-                    {
-                        '$lookup': {
-                            'from': 'bills', 
-                            'localField': 'bills', 
-                            'foreignField': '_id', 
-                            'as': 'bills'
-                        }
-                    }, {
-                        '$unwind': '$bills'
-                    }, {
-                        '$lookup': {
-                            'from': 'orders', 
-                            'localField': 'bills.orders', 
-                            'foreignField': '_id', 
-                            'as': 'bills.orders'
-                        }
-                    }, {
-                        '$lookup': {
-                            'from': 'Users', 
-                            'localField': 'bills.created_by', 
-                            'foreignField': 'user_id', 
-                            'as': 'bills.created_by'
-                        }
-                    }, {
-                        '$project': {
-                            '_id': '$bills._id', 
-                            'bill_data': '$bills', 
-                            'bill_cost': {
-                                '$sum': '$bills.orders.cost'
-                            }, 
-                            'orders_count': {
-                                '$size': '$bills.orders'
+                {
+                    '$lookup': {
+                        'from': 'bills', 
+                        'localField': 'bills', 
+                        'foreignField': '_id', 
+                        'as': 'bills'
+                    }
+                }, {
+                    '$unwind': '$bills'
+                }, {
+                    '$lookup': {
+                        'from': 'orders', 
+                        'localField': 'bills.orders', 
+                        'foreignField': '_id', 
+                        'as': 'bills.orders'
+                    }
+                }, {
+                    '$lookup': {
+                        'from': 'Users', 
+                        'localField': 'bills.created_by', 
+                        'foreignField': 'user_id', 
+                        'as': 'bills.created_by'
+                    }
+                }, {
+                    '$project': {
+                        '_id': '$bills._id', 
+                        'bill_data': '$bills', 
+                        'bill_cost': {
+                            '$sum': '$bills.orders.cost'
+                        }, 
+                        'orders_count': {
+                            '$size': '$bills.orders'
+                        }, 
+                        'timestamp': '$bills.timestamp'
+                    }
+                }, {
+                    '$group': {
+                        '_id': {
+                            '$first': '$bill_data.created_by.username'
+                        }, 
+                        'bills': {
+                            '$push': {
+                                'bill_data': '$bill_data', 
+                                'bill_cost': '$bill_cost', 
+                                'orders_count': '$orders_count', 
+                                'timestamp': '$timestamp'
                             }
-                        }
-                    }, {
-                        '$group': {
-                            '_id': {
-                                '$first': '$bill_data.created_by.username'
-                            }, 
-                            'bills': {
-                                '$push': {
-                                    'bill_data': '$bill_data', 
-                                    'bill_cost': '$bill_cost', 
-                                    'orders_count': '$order_count'
+                        }, 
+                        'bills_by_card': {
+                            '$push': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'card'
+                                        ]
+                                    }, 
+                                    'then': {
+                                        'bill_name': '$bill_data.bill_name', 
+                                        'bill_cost': '$bill_cost', 
+                                        'orders_count': '$orders_count', 
+                                        'timestamp': '$timestamp'
+                                    }, 
+                                    'else': '$$REMOVE'
                                 }
-                            }, 
-                            'bills_by_card': {
-                                '$push': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'card'
-                                            ]
-                                        }, 
-                                        'then': {
-                                            'bill_name': '$bill_data.bill_name', 
-                                            'bill_cost': '$bill_cost', 
-                                            'orders_count': '$orders_count'
-                                        }, 
-                                        'else': '$$REMOVE'
-                                    }
-                                }
-                            }, 
-                            'card_total': {
-                                '$sum': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'card'
-                                            ]
-                                        }, 
-                                        'then': '$bill_cost', 
-                                        'else': 0
-                                    }
-                                }
-                            }, 
-                            'bills_by_cash': {
-                                '$push': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'cash'
-                                            ]
-                                        }, 
-                                        'then': {
-                                            'bill_name': '$bill_data.bill_name', 
-                                            'bill_cost': '$bill_cost', 
-                                            'orders_count': '$orders_count'
-                                        }, 
-                                        'else': '$$REMOVE'
-                                    }
-                                }
-                            }, 
-                            'cash_total': {
-                                '$sum': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'cash'
-                                            ]
-                                        }, 
-                                        'then': '$bill_cost', 
-                                        'else': 0
-                                    }
-                                }
-                            }, 
-                            'chief': {
-                                '$push': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'chief'
-                                            ]
-                                        }, 
-                                        'then': {
-                                            'bill_name': '$bill_data.bill_name', 
-                                            'bill_cost': '$bill_cost', 
-                                            'orders_count': '$orders_count'
-                                        }, 
-                                        'else': '$$REMOVE'
-                                    }
-                                }
-                            }, 
-                            'chief_total': {
-                                '$sum': {
-                                    '$cond': {
-                                        'if': {
-                                            '$eq': [
-                                                '$bill_data.payment_method', 'chief'
-                                            ]
-                                        }, 
-                                        'then': '$bill_cost', 
-                                        'else': 0
-                                    }
-                                }
-                            }, 
-                            'total_sellings': {
-                                '$sum': {
-                                    '$cond': {
-                                        'if': {
-                                            '$in': [
-                                                '$bill_data.payment_method', [
-                                                    'card', 'cash'
-                                                ]
-                                            ]
-                                        }, 
-                                        'then': '$orders_count', 
-                                        'else': 0
-                                    }
-                                }
-                            }, 
-                            'total_orders': {
-                                '$sum': '$orders_count'
                             }
+                        }, 
+                        'card_total': {
+                            '$sum': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'card'
+                                        ]
+                                    }, 
+                                    'then': '$bill_cost', 
+                                    'else': 0
+                                }
+                            }
+                        }, 
+                        'bills_by_cash': {
+                            '$push': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'cash'
+                                        ]
+                                    }, 
+                                    'then': {
+                                        'bill_name': '$bill_data.bill_name', 
+                                        'bill_cost': '$bill_cost', 
+                                        'orders_count': '$orders_count', 
+                                        'timestamp': '$timestamp'
+                                    }, 
+                                    'else': '$$REMOVE'
+                                }
+                            }
+                        }, 
+                        'cash_total': {
+                            '$sum': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'cash'
+                                        ]
+                                    }, 
+                                    'then': '$bill_cost', 
+                                    'else': 0
+                                }
+                            }
+                        }, 
+                        'chief': {
+                            '$push': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'chief'
+                                        ]
+                                    }, 
+                                    'then': {
+                                        'bill_name': '$bill_data.bill_name', 
+                                        'bill_cost': '$bill_cost', 
+                                        'orders_count': '$orders_count', 
+                                        'timestamp': '$timestamp'
+                                    }, 
+                                    'else': '$$REMOVE'
+                                }
+                            }
+                        }, 
+                        'chief_total': {
+                            '$sum': {
+                                '$cond': {
+                                    'if': {
+                                        '$eq': [
+                                            '$bill_data.payment_method', 'chief'
+                                        ]
+                                    }, 
+                                    'then': '$bill_cost', 
+                                    'else': 0
+                                }
+                            }
+                        }, 
+                        'total_sellings': {
+                            '$sum': {
+                                '$cond': {
+                                    'if': {
+                                        '$in': [
+                                            '$bill_data.payment_method', [
+                                                'card', 'cash'
+                                            ]
+                                        ]
+                                    }, 
+                                    'then': '$orders_count', 
+                                    'else': 0
+                                }
+                            }
+                        }, 
+                        'total_orders': {
+                            '$sum': '$orders_count'
                         }
                     }
-                ], 
+                }
+            ], 
                 'tabacco_data': [
                     {
                         '$lookup': {

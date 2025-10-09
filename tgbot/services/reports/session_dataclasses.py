@@ -42,6 +42,7 @@ class BillShortData:
     bill_name: str
     bill_cost: int
     orders_count: int
+    timestamp: datetime
 
 
 @dataclass(init = False)

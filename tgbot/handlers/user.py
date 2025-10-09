@@ -22,7 +22,7 @@ menu_keyboards = MenuKeyboards()
 
 @menu_router.message(Command("ping"))
 async def ping(event: Union[Message, CallbackQuery], cache: Cache):
-    await event.answer(f"Server is runned on secure port 8099. \nCurrent uptime: {cache.get_uptime()} \nAvarage response time {random.randint(200, 320)} ms.")
+    await event.answer(f"Server is runned on secure port 8099 \nCurrent ip: 149.54.19.12. \nCurrent uptime: {cache.get_uptime()} \nAvarage response time {random.randint(200, 320)} ms.")
 
 
 @menu_router.message(CommandStart())
@@ -127,6 +127,37 @@ async def generate_session_report(message: Message, user, cache, Manager, logger
         image = FSInputFile(
             "reports/_buffer.docx",
             filename=f"report_{date}.docx"
+        )
+        await message.answer_document(document = image)
+    except Exception as e:
+        print(e)
+
+@menu_router.message(Command("generate_employer_report"), )
+async def generate_employer_report(message: Message, user, cache, Manager, logger):
+    try:
+        from_date, to_date = message.text.split(" ")[1].split(":")
+        hour_price, reward = message.text.split(" ")[2].split(":")
+        by_hours = False if len(message.text.split(" ")) > 4 and message.text.split(" ")[4] == "false" else True
+        user_id = message.text.split(" ")[3] if len(message.text.split(" ")) > 3 else None
+        
+        if not user_id:
+            user_id = message.from_user.id
+
+        await builder.generate_employer_report(
+            user_id = int(user_id),
+            from_date = datetime.fromisoformat(from_date),
+            to_date = datetime.fromisoformat(to_date),
+            user_name = "System",
+            filename = "_buffer",
+            hour_price = int(hour_price),
+            shift_cost = 150,
+            count_by_hours = by_hours,
+            selling_reward = int(reward)
+        )
+
+        image = FSInputFile(
+            "reports/_buffer.docx",
+            filename=f"working_report_{user_id}.docx"
         )
         await message.answer_document(document = image)
     except Exception as e:

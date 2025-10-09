@@ -63,3 +63,18 @@ class SessionStates(StatesGroup):
     open_order = State()
     change_payment_method = State()
     close_session_commit = State()
+
+
+class ReportsStates(StatesGroup):
+    reports_menu = State()
+    generate_report = State()
+    show_report = State()
+    view_reports = State()
+    delete_report = State()
+    report_options = State()
+
+    employer_report_menu = State()
+    employer_report_calendar = State()
+    pereodic_report = State()
+
+    back = State()

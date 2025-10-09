@@ -65,3 +65,16 @@ class SessionNavigateCallback(CallbackData, prefix = "session"):
     permissions: Optional[str] = None
     bill_id: Optional[str] = None
     order_id: Optional[str] = None
+
+
+class ReportNavigateCallback(CallbackData, prefix = "report"):
+    action: str
+    report_id: Optional[str] = None
+    user_id: Optional[int] = None
+    permissions: Optional[str] = None
+
+class CalendarCallback(CallbackData, prefix = "calendar"):
+    action: str
+    year: Optional[int] = None
+    month: Optional[int] = None
+    day: Optional[int] = None

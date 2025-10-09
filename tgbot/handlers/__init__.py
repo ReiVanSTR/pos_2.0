@@ -4,6 +4,7 @@ from .storage import storage_router
 from .orders import orders_router
 from .bills import bills_router
 from .session import session_router
+from .reports import reports_router
 
 routers_list = [
     storage_router,
@@ -11,6 +12,7 @@ routers_list = [
     bills_router,
     orders_router,
     session_router,
+    reports_router,
 ]
 
 __all__ = [

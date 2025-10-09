@@ -2,7 +2,7 @@ import logging
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from datetime import datetime
 
-from ..models import User, UserData, Session, Permissions, Shift
+from ..models import User, UserData, Session, Permissions, Shift, Post
 
 from .callbacks import MenuNavigateCallback
 from .pager import BasicPageGenerator
@@ -43,6 +43,13 @@ class MenuKeyboards():
                                                 callback_data = MenuNavigateCallback(button_name = "test"))
         options_button.adjust(1)
         keyboard.attach(options_button)
+
+        if Permissions.GLOBAL.value in user.permissions or user.post == Post.Admin:
+            reports_button = InlineKeyboardBuilder().button(
+                                                    text = f"Reports📊", 
+                                                    callback_data = MenuNavigateCallback(button_name = "reports", permissions = Permissions.GLOBAL.value))
+            reports_button.adjust(1)
+            keyboard.attach(reports_button)
 
         return keyboard.as_markup()
 
