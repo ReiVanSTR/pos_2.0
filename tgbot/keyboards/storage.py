@@ -53,7 +53,7 @@ async def storage_brand(type: str) -> InlineKeyboardMarkup:
     brands = await Tabacco.get_all_brands_by_type(type)
 
     keyboard.button(
-        text = "New brand",
+        text = "Nowy brand",
         callback_data = StorageNavigate(action = "new_brand")
     )
 
@@ -75,7 +75,7 @@ def storage_cancel():
     keyboard = InlineKeyboardBuilder()
 
     keyboard.button(
-        text = "Cancel",
+        text = "Anujuj",
         callback_data = StorageNavigate(action = "back")
     )
 
@@ -85,12 +85,12 @@ def storage_commit(callback):
     keyboard = InlineKeyboardBuilder()
 
     keyboard.button(
-        text = "Yes",
+        text = "Tak",
         callback_data = callback(commit = "yes")
     )
 
     keyboard.button(
-        text = "Nope",
+        text = "Nie",
         callback_data = callback(commit = "no")
     )
     keyboard.adjust(1,1)
@@ -129,7 +129,7 @@ class ShowPageGenerator(BasicPageGenerator):
         keyboard.row(*navigate_buttons.buttons, width = 5)
 
         back_button = InlineKeyboardBuilder()
-        back_button.button(text = "<< Storage <<",callback_data = StorageNavigate(action = "back"))
+        back_button.button(text = "<< Magazyn <<",callback_data = StorageNavigate(action = "back"))
 
         keyboard.attach(back_button)
 
@@ -141,11 +141,11 @@ class ShowPageGenerator(BasicPageGenerator):
         tabacco = await Tabacco.get_by_id(tabacco_id)
 
         if not data:
-            keyboard.button(text = "Not inventarizet yet.", callback_data = NavigatePageKeyboard(action = "static", current_page = current_page))
+            keyboard.button(text = "Brak ostatniej inwent.", callback_data = NavigatePageKeyboard(action = "static", current_page = current_page))
         else:
             for change in data.changes:
                 keyboard.button(
-                    text = f"Id - {change._id} | Inspector: {change.user_id} ({change.expected_weight} -> {change.accepted_weight})", 
+                    text = f"Id - {change._id} | Sprawdził: {change.user_id} ({change.expected_weight} -> {change.accepted_weight})", 
                     callback_data = NavigatePageKeyboard(action = "static", current_page = current_page)
                 )
             
@@ -153,8 +153,8 @@ class ShowPageGenerator(BasicPageGenerator):
 
         remove_keyboard = InlineKeyboardBuilder()
 
-        remove_keyboard.button(text = "Remove tabacco", callback_data = StorageNavigate(action = "remove_tabacco"))
-        remove_keyboard.button(text = "Showed" if tabacco.is_showed else "Hiden", callback_data = StorageNavigate(action = "show_checkbox"))
+        remove_keyboard.button(text = "Usuń tytoń", callback_data = StorageNavigate(action = "remove_tabacco"))
+        remove_keyboard.button(text = "Pokazany" if tabacco.is_showed else "Ukryty", callback_data = StorageNavigate(action = "show_checkbox"))
 
         keyboard.attach(remove_keyboard)
 
@@ -171,7 +171,7 @@ class ShowPageGenerator(BasicPageGenerator):
         
         markup = self.show_page_keyboard(current_page = current_page)
 
-        await query.message.edit_text(text = "Storage", reply_markup = markup)
+        await query.message.edit_text(text = "Magazyn", reply_markup = markup)
 
         
 
@@ -179,7 +179,7 @@ def storage_invent_menu():
     keyboard = InlineKeyboardBuilder()
 
     #in config
-    invent_menu_buttons = ["Single", "Total"]
+    invent_menu_buttons = ["Pojedyncza", "Pełna", "Korekta"]
 
     for button in invent_menu_buttons:
         keyboard.button(text = button, callback_data = StorageNavigate(action = button.lower()))
@@ -215,7 +215,7 @@ class InventPageGenerator(BasicPageGenerator):
         keyboard.row(*navigate_buttons.buttons, width = 5)
         
         back_button = InlineKeyboardBuilder()
-        back_button.button(text = "<< Invent <<",callback_data = StorageNavigate(action = "back"))
+        back_button.button(text = "<< Powrót <<",callback_data = StorageNavigate(action = "back"))
 
         keyboard.attach(back_button)
 
@@ -230,7 +230,7 @@ class InventPageGenerator(BasicPageGenerator):
         
         markup = self.invent_page_keyboard(current_page = current_page)
 
-        await query.message.edit_text(text = "Invent", reply_markup = markup)
+        await query.message.edit_text(text = "Remament", reply_markup = markup)
 
     async def massage_input(self, message: Message, Manager: Manager, user):
         try:
@@ -241,7 +241,7 @@ class InventPageGenerator(BasicPageGenerator):
             markup = self.show_num_keyboard(current_num=0)
             
         await message.delete()
-        await main_query[user.user_id].message.edit_text("Input invent weight", reply_markup = markup) 
+        await main_query[user.user_id].message.edit_text("Wprowadź wagę inwentaryzacyjną", reply_markup = markup) 
 
 
     async def navigate_page_num_keyboard(self, query: CallbackQuery, callback_data: NumKeyboardCallback, Manager: Manager):
@@ -265,7 +265,7 @@ class InventPageGenerator(BasicPageGenerator):
                 await Manager.update_data("current_num", current_num)
                 markup = self.show_num_keyboard(current_num=current_num)
 
-        await query.message.edit_text("Input invent weight", reply_markup = markup)
+        await query.message.edit_text("Wprowadź wagę inwentaryzacyjną", reply_markup = markup)
 
     def show_num_keyboard(self, current_num = 0):
         return self.page_num_keyboard(callback = NumKeyboardCallback, current_num = current_num)

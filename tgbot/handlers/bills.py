@@ -57,7 +57,7 @@ async def form_new_bill(query: CallbackQuery, state: FSMContext, Manager: Manage
     await Manager.push(FormNewBill.input_name.state, {})
 
     markup = keyboards.new_bill_cancel()
-    await query.message.edit_text("Input bill name:", reply_markup = markup) #noqa: Y
+    await query.message.edit_text("Wprowadź nazwę rachunku:", reply_markup = markup) #noqa: Y
 
     global last_query
     last_query = query
@@ -70,7 +70,7 @@ async def form_input_name(message: Message, state: FSMContext, Manager: Manager)
 
     markup = keyboards.bills_commit()
 
-    await last_query.message.edit_text(f"Confirm {message.text.strip()}", reply_markup = markup)
+    await last_query.message.edit_text(f"Zatwierdź {message.text.strip()}", reply_markup = markup)
     await message.delete()
 
 
@@ -89,13 +89,13 @@ async def form_commit_name(query: CallbackQuery, state: FSMContext, Manager: Man
     keyboards.update(data = await Session.get_bills())
     markup = await keyboards.open_bill(await Bills.get_bill(bill_id))
 
-    await query.message.edit_text("Bills menu", reply_markup = markup)
+    await query.message.edit_text("Rachunki", reply_markup = markup)
 
 @bills_router.callback_query(StateFilter(BillStates.open_bill), BillsNavigate.filter(F.action == "close_bill"))
 async def orders_choose_payment_method(query: CallbackQuery, Manager: Manager):
     bill = await Bills.get_bill(await Manager.get_data("bill_id"))
     if not bill.orders:
-        await query.answer(text = "You can't close empty bill", show_alert = True)
+        await query.answer(text = "Nie mozna zamknąć pustego rachinku!", show_alert = True)
         return
     
     await query.answer()
@@ -103,7 +103,7 @@ async def orders_choose_payment_method(query: CallbackQuery, Manager: Manager):
 
     markup = keyboards.show_paymant_keyboard()
     
-    await query.message.edit_text(text = "Choose payment method", reply_markup = markup)
+    await query.message.edit_text(text = "Wybierz metodę płatności", reply_markup = markup)
 
 @bills_router.callback_query(StateFilter(BillStates.options), BillsNavigate.filter(F.action == "delete_bill"))
 async def delete_bill(query: CallbackQuery, Manager: Manager, cache: Cache):
@@ -116,7 +116,7 @@ async def delete_bill(query: CallbackQuery, Manager: Manager, cache: Cache):
     keyboards.update(data = await cache.getAllBills(filter = {"is_closed":False}, update = True))
     markup = await keyboards.bills_menu()
 
-    await query.message.edit_text(text = "Bills menu", reply_markup = markup)
+    await query.message.edit_text(text = "Rachunki", reply_markup = markup)
 
 
 @bills_router.callback_query(StateFilter(BillStates.open_bill), BillsNavigate.filter(F.action == "options"))
@@ -125,7 +125,7 @@ async def show_bill_options(query: CallbackQuery, Manager: Manager):
     await Manager.push(BillStates.options.state, push = True)
 
     markup = keyboards.show_options()
-    await query.message.edit_text(text = "Options", reply_markup = markup)
+    await query.message.edit_text(text = "Opcje", reply_markup = markup)
 # 
 @bills_router.callback_query(StateFilter(BillStates.close_bill), BillsNavigate.filter(F.action.in_(["card", "cash", "chief"])))
 async def orders_close_bill(query: CallbackQuery, Manager: Manager, callback_data: BillsNavigate):
@@ -150,7 +150,7 @@ async def orders_close_bill(query: CallbackQuery, Manager: Manager, callback_dat
     markup = await keyboards.bills_menu()
 
     logging.log(30, f"Closed bill {bill.bill_name}. Crerated by {bill.created_by}. Closed by {query.from_user.id}")
-    await query.message.edit_text("Bill", reply_markup = markup)
+    await query.message.edit_text("Rachunek", reply_markup = markup)
 
 
 #back
@@ -174,9 +174,9 @@ async def back_to_menu(query: CallbackQuery, state: FSMContext, user: UserData, 
 
     reply_text = {
         "MenuStates:menu":"Menu",
-        "BillStates:bills_menu":"Bills menu",
-        "BillStates:open_bill":"Bill",
-        "FormNewBill:input_name":"Input table name",
+        "BillStates:bills_menu":"Rachunki",
+        "BillStates:open_bill":"Rachunek",
+        "FormNewBill:input_name":"Wprowadź nazwę rachunku:",
     }
 
     text = reply_text.get(_state_record.state)

@@ -31,11 +31,11 @@ class OrderKeyboards(BasicPageGenerator):
         
         markup = self.choose_tabacco(cart = await Manager.get_data("cart"), current_page = current_page)
 
-        await query.message.edit_text(text = "Choose tabacco: ", reply_markup = markup)
+        await query.message.edit_text(text = "Wyberz tytoń: ", reply_markup = markup)
 
     async def open_bill(self, bill: BillData):
         keyboard = InlineKeyboardBuilder()
-        keyboard.button(text = f"{bill.bill_name} | Created {(str((datetime.utcnow() - bill.timestamp)).split(', ')[-1]).split('.')[0]} ago",
+        keyboard.button(text = f"{bill.bill_name} | Utworzono {(str((datetime.utcnow() - bill.timestamp)).split(', ')[-1]).split('.')[0]} temu",
                         callback_data = OrderNavigateCallback(action = "static", bill_id = bill._id.__str__()))
         if bill.orders:
             for order in bill.orders:
@@ -43,35 +43,35 @@ class OrderKeyboards(BasicPageGenerator):
                 keyboard.button(text = f"{result.order_name} | {result.cost} pln",
                         callback_data = OrderNavigateCallback(action = "open_order", order_id = result._id.__str__()))
         else:
-            keyboard.button(text = "(No orders)",
+            keyboard.button(text = "(Brak zamówień)",
                         callback_data = OrderNavigateCallback(action = "static", bill_id = bill._id.__str__()))
 
-        keyboard.button(text = "Add",
+        keyboard.button(text = "Dodaj",
                         callback_data = OrderNavigateCallback(action = "add_new_order", bill_id = bill._id.__str__()))
         
         keyboard.adjust(1, repeat = True)
         
         operation_keyboard = InlineKeyboardBuilder()
-        operation_keyboard.button(text = "Close bill",
+        operation_keyboard.button(text = "Zamknij rachunek",
                         callback_data = BillsNavigate(action = "close_bill"))
-        operation_keyboard.button(text = "Options",
+        operation_keyboard.button(text = "Opcje",
                         callback_data = BillsNavigate(action = "options"))
         
         keyboard.row(*operation_keyboard.buttons, width = 2)
 
-        keyboard.attach(InlineKeyboardBuilder().button(text = "<< Bills <<", callback_data = BillsNavigate(action = "back")))
+        keyboard.attach(InlineKeyboardBuilder().button(text = "<< Rachunki <<", callback_data = BillsNavigate(action = "back")))
         
         return keyboard.as_markup()
     
     def new_order(self):
         keyboard = InlineKeyboardBuilder()
 
-        menu = ["Hookah", "Other"]
+        menu = ["Hookah", "Inne"]
 
         for button in menu:
             keyboard.button(text = button, callback_data = OrderNavigateCallback(action = button.lower(), bill_id = ""))
 
-        keyboard.button(text = "<< Bill <<", callback_data = OrderNavigateCallback(action = "back"))
+        keyboard.button(text = "<< Rachunek <<", callback_data = OrderNavigateCallback(action = "back"))
         keyboard.adjust(len(menu), 1)
 
         return keyboard.as_markup()
@@ -82,7 +82,7 @@ class OrderKeyboards(BasicPageGenerator):
         if not cart:
             cart = {}
 
-        keyboard.button(text = f" Cart ({len(cart)})", callback_data = OrderNavigateCallback(action = "open_cart", bill_id = " "))
+        keyboard.button(text = f"Cart: ({len(cart)})", callback_data = OrderNavigateCallback(action = "open_cart", bill_id = " "))
 
         start_index, end_index = self.indexes(current_page)
         buttons = self.data[start_index:end_index]
@@ -100,11 +100,11 @@ class OrderKeyboards(BasicPageGenerator):
         keyboard.row(*navigate_buttons.buttons, width = 5)
 
         commit = InlineKeyboardBuilder()
-        commit.button(text = "Commit mix",callback_data = OrderNavigateCallback(action = "commit_mix"))
+        commit.button(text = "Zapisz",callback_data = OrderNavigateCallback(action = "commit_mix"))
         keyboard.attach(commit)
 
         back_button = InlineKeyboardBuilder()
-        back_button.button(text = "<< Cancel <<",callback_data = OrderNavigateCallback(action = "back"))
+        back_button.button(text = "<< Anuluj <<",callback_data = OrderNavigateCallback(action = "back"))
 
         keyboard.attach(back_button)
 
@@ -120,7 +120,7 @@ class OrderKeyboards(BasicPageGenerator):
             markup = self.show_num_keyboard(current_num=0)
             
         await message.delete()
-        await main_query.edit_text("Input invent weight", reply_markup = markup) 
+        await main_query.edit_text("Wprowadź wagę inwentaryzacyjną", reply_markup = markup) 
 
     async def navigate_page_num_keyboard(self, query: CallbackQuery, callback_data: NumKeyboardCallback, Manager: Manager):
         await query.answer(cache_time=1)
@@ -143,7 +143,7 @@ class OrderKeyboards(BasicPageGenerator):
                 await Manager.update_data("current_num", current_num)
                 markup = self.show_num_keyboard(current_num=current_num)
 
-        await query.message.edit_text("Input invent weight", reply_markup = markup)
+        await query.message.edit_text("Wprowadź wagę inwentaryzacyjną", reply_markup = markup)
 
     async def tabacco_filter(self, message: Message, Manager: Manager, cache, user: UserData):
         # logging.log(30, self._cache)
@@ -176,7 +176,7 @@ class OrderKeyboards(BasicPageGenerator):
     def show_num_keyboard(self, current_num: Union[int, float] = 0):
         keyboard = InlineKeyboardBuilder(self.page_num_keyboard(callback = NumKeyboardCallback, current_num = current_num).inline_keyboard)
 
-        keyboard.button(text = "Cancel", callback_data = OrderNavigateCallback(action = "back"))
+        keyboard.button(text = "Anuluj", callback_data = OrderNavigateCallback(action = "back"))
 
         return keyboard.as_markup()
     
@@ -188,13 +188,13 @@ class OrderKeyboards(BasicPageGenerator):
             tabacco.used_weight = value.get("used_weight")
             logging.info(tabacco)
             builder = InlineKeyboardBuilder()
-            builder.button(text = f"{tabacco.brand} | {tabacco.label} | Used: {tabacco.used_weight}g", callback_data = OrderNavigateCallback(action = "static", bill_id = " "))
+            builder.button(text = f"{tabacco.brand} | {tabacco.label} | Użyto: {tabacco.used_weight}g", callback_data = OrderNavigateCallback(action = "static", bill_id = " "))
             builder.button(text = "📝", callback_data = OrderNavigateCallback(action = "edit", tabacco_id = key))
             builder.button(text = "❌", callback_data = OrderNavigateCallback(action = "remove", tabacco_id = key))
             builder.adjust(1,2)
             keyboard.attach(builder)
 
-        keyboard.attach(InlineKeyboardBuilder().button(text = "<< Tabacco <<", callback_data = OrderNavigateCallback(action = "back")))
+        keyboard.attach(InlineKeyboardBuilder().button(text = "<< Tytonie <<", callback_data = OrderNavigateCallback(action = "back")))
 
         return keyboard.as_markup()
     
@@ -202,11 +202,9 @@ class OrderKeyboards(BasicPageGenerator):
         keyboard = InlineKeyboardBuilder()
 
         cost_menu = [
-            {"Standart 80 pln":80},
-            {"Premium 100 pln": 100},
-            {"Classic 69 pln": 69},
-            {"Chief 79 pln": 79},
-            {"Spritz 79 pln": 79},
+            {"Standart 75 pln":75},
+            {"Premium 90 pln": 90},
+            {"Students 50 pln": 50},
             {"Stuff 40 pln": 40},
             {"Wystawka": 0},
         ]
@@ -225,17 +223,17 @@ class OrderKeyboards(BasicPageGenerator):
         order = await Order.get_order(order_id = order_id)
         user = await User.get_user_by_user_id(order.created_by)
         keyboard.button(
-            text = f"{order.order_name} | Created: {(str((datetime.utcnow() - order.timestamp)).split(', ')[-1]).split('.')[0]} ago ", 
+            text = f"{order.order_name} | Utworzono: {(str((datetime.utcnow() - order.timestamp)).split(', ')[-1]).split('.')[0]} temu ", 
             callback_data=OrderNavigateCallback(action = "static")
         )
         keyboard.button(
-            text = f"Created by: {user.username} | {user.post.name}".ljust(40), 
+            text = f"Przez: {user.username} | {user.post.name}".ljust(40), 
             callback_data=OrderNavigateCallback(action = "static")
         )
         
         if order.discount:
             keyboard.button(
-                text = f"Discount: {order.discount}%", 
+                text = f"Zniżka: {order.discount}%", 
                 callback_data=OrderNavigateCallback(action = "static")
             )
 
@@ -255,16 +253,16 @@ class OrderKeyboards(BasicPageGenerator):
 
         option_keyboard = InlineKeyboardBuilder()
         option_keyboard.button(
-            text = "Save mix 💾",
+            text = "Zapisz mix 💾",
             callback_data = OrderNavigateCallback(action = "save_mix")
         )
         option_keyboard.button(
-            text = "Remove❌", 
+            text = "Usuń❌", 
             callback_data = OrderNavigateCallback(action = "remove_order", permissions = Permissions.ORDERS_REMOVE_ORDER.value)
         )
 
         option_keyboard.button(
-            text = "Discount💸",
+            text = "Rabat💸",
             callback_data = OrderNavigateCallback(action = "discount_order",)
         )
 
@@ -288,13 +286,13 @@ class OrderKeyboards(BasicPageGenerator):
         if weekday == 2:  # Tuesday
             discount_menu.append({"Wtorek 25%":25})
         if weekday == 3:  # Wednesday  
-            discount_menu.append({"Sroda 25%":25})
+            discount_menu.append({"Środa 25%":25})
 
         for discount in discount_menu:
             name, percent = list(discount.items())[0]
             keyboard.button(text = name, callback_data = OrderNavigateCallback(action = "discount", discount = str(percent)))
 
         keyboard.adjust(2, repeat=True)
-        keyboard.attach(InlineKeyboardBuilder().button(text = "<<Order<<", callback_data = OrderNavigateCallback(action="back")))
+        keyboard.attach(InlineKeyboardBuilder().button(text = "<< Zamówienia <<", callback_data = OrderNavigateCallback(action="back")))
 
         return keyboard.as_markup()

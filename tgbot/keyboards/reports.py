@@ -24,15 +24,15 @@ class ReportsKeyboards(BasicPageGenerator):
 
         row = InlineKeyboardBuilder()
 
-        row.button(text = "Pereodic report", callback_data = ReportNavigateCallback(action = ReportsButtonActions.PEREODIC_REPORT.value))
-        row.button(text = "View daily reports", callback_data = ReportNavigateCallback(action = ReportsButtonActions.VIEW_REPORTS.value))
-        row.button(text = "Employess reports", callback_data = ReportNavigateCallback(action = ReportsButtonActions.EMPLOYEES_REPORTS.value))
-        row.button(text = "Report Options", callback_data = ReportNavigateCallback(action = ReportsButtonActions.REPORT_OPTIONS.value))
+        row.button(text = "Raport okresowy", callback_data = ReportNavigateCallback(action = ReportsButtonActions.PEREODIC_REPORT.value))
+        row.button(text = "Raporty dzienne", callback_data = ReportNavigateCallback(action = ReportsButtonActions.VIEW_REPORTS.value))
+        row.button(text = "Raporty pracowników", callback_data = ReportNavigateCallback(action = ReportsButtonActions.EMPLOYEES_REPORTS.value))
+        row.button(text = "Ustawienia raportów", callback_data = ReportNavigateCallback(action = ReportsButtonActions.REPORT_OPTIONS.value))
         row.adjust(1)
         keyboard.attach(row)
 
         back_button = InlineKeyboardBuilder().button(
-                                                text = "Back to Menu", 
+                                                text = "<< Menu <<", 
                                                 callback_data = ReportNavigateCallback(action = ReportsButtonActions.BACK.value))
         back_button.adjust(1)
         keyboard.attach(back_button)
@@ -60,7 +60,7 @@ class ReportsKeyboards(BasicPageGenerator):
         keyboard.row(*navigate_buttons.buttons, width = 5)
 
         back_button = InlineKeyboardBuilder()
-        back_button.button(text = "<< Bills menu <<", callback_data = ReportNavigateCallback(action = ReportsButtonActions.BACK.value))
+        back_button.button(text = "<< Powrót <<", callback_data = ReportNavigateCallback(action = ReportsButtonActions.BACK.value))
 
         keyboard.attach(back_button)
 
@@ -70,23 +70,23 @@ class ReportsKeyboards(BasicPageGenerator):
         keyboard = InlineKeyboardBuilder()
 
         session = await Session.generate_report_data(session_id = report_id)
-        keyboard.button(text = f"{session.session_data.opened_by.timestamp.date().strftime('%Y-%m-%d')} | Work time {session.session_data.session_active_time.hours}g {session.session_data.session_active_time.minutes}min", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
-        keyboard.button(text = f"Opened by: {session.session_data.opened_by.user_data.username}", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
-        keyboard.button(text = f"Closed by: {session.session_data.closed_by.user_data.username}", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
-        keyboard.button(text = f"Card: {session.total_selling_by_card} pln", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
-        keyboard.button(text = f"Cash: {session.total_selling_cash} pln", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
-        keyboard.button(text = f"Chief: {session.total_selling_chief} pln", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
-        keyboard.button(text = f"Tabacco: {session.total_tabacco}g", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
+        keyboard.button(text = f"{session.session_data.opened_by.timestamp.date().strftime('%Y-%m-%d')} | Czas pracy {session.session_data.session_active_time.hours}g {session.session_data.session_active_time.minutes}min", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
+        keyboard.button(text = f"Otwarty przez: {session.session_data.opened_by.user_data.username}", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
+        keyboard.button(text = f"Zamknięty przez: {session.session_data.closed_by.user_data.username}", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
+        keyboard.button(text = f"Karta: {session.total_selling_by_card} pln", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
+        keyboard.button(text = f"Gotówka: {session.total_selling_cash} pln", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
+        keyboard.button(text = f"Szef: {session.total_selling_chief} pln", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
+        keyboard.button(text = f"Tytoń: {session.total_tabacco}g", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
 
         # keyboard.button(text = f"{session.session_data.opened_by}", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
         # keyboard.button(text = f"{session.session_data.opened_by}", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
 
 
-        keyboard.button(text = "Generate report", callback_data = self._navigate_callback(action = ReportsButtonActions.GENERATE_REPORT.value, report_id=report_id))
+        keyboard.button(text = "Wygeneruj raport", callback_data = self._navigate_callback(action = ReportsButtonActions.GENERATE_REPORT.value, report_id=report_id))
         keyboard.adjust(1)
 
         back_button = InlineKeyboardBuilder()
-        back_button.button(text = "<< Back <<", callback_data = ReportNavigateCallback(action = ReportsButtonActions.BACK.value))
+        back_button.button(text = "<< Powrót <<", callback_data = ReportNavigateCallback(action = ReportsButtonActions.BACK.value))
 
         keyboard.attach(back_button)
 
@@ -170,12 +170,12 @@ class ReportsKeyboards(BasicPageGenerator):
         #Navigation
         row = InlineKeyboardBuilder()
         row.button(text = "<", callback_data = CalendarCallback(action = CalendarActions.PREV_MONTH.value, year=year, month=month))
-        row.button(text = " ", callback_data = CalendarCallback(action = CalendarActions.STATIC.value)) if not (selected_range and selected_range[1] and selected_range[0]) else row.button(text = f"Commit", callback_data = CalendarCallback(action = CalendarActions.COMMIT.value))
+        row.button(text = " ", callback_data = CalendarCallback(action = CalendarActions.STATIC.value)) if not (selected_range and selected_range[1] and selected_range[0]) else row.button(text = f"Zatwierdź", callback_data = CalendarCallback(action = CalendarActions.COMMIT.value))
         row.button(text = ">", callback_data = CalendarCallback(action = CalendarActions.NEXT_MONTH.value, year=year, month=month))
         row.adjust(3)
         keyboard.attach(row)
 
-        keyboard.attach(InlineKeyboardBuilder().button(text = "Back", callback_data = ReportNavigateCallback(action = ReportsButtonActions.BACK.value)))
+        keyboard.attach(InlineKeyboardBuilder().button(text = "Powrót", callback_data = ReportNavigateCallback(action = ReportsButtonActions.BACK.value)))
 
         return keyboard.as_markup()
     
@@ -192,7 +192,7 @@ class ReportsKeyboards(BasicPageGenerator):
             action_date = old_date - timedelta(days = 1)
 
         markup = await self.inline_calendar(year = action_date.year, month = action_date.month, selected_range = [first_selected, second_selected])
-        await query.message.edit_text("Calendar", reply_markup = markup)
+        await query.message.edit_text("Kalendar", reply_markup = markup)
 
     async def select_day(self, query: CallbackQuery, callback_data: CalendarCallback, Manager: Manager):
         await query.answer()
@@ -235,7 +235,7 @@ class ReportsKeyboards(BasicPageGenerator):
             keyboard.button(text = f"{user.username} | {user.post.name} | {user.hour_price} zł", callback_data = ReportNavigateCallback(action = ReportsButtonActions.SELECT_EMPLOYEE.value, user_id = user.user_id))
 
 
-        keyboard.button(text = "Back", callback_data = ReportNavigateCallback(action = ReportsButtonActions.BACK.value))
+        keyboard.button(text = "Powrót", callback_data = ReportNavigateCallback(action = ReportsButtonActions.BACK.value))
         keyboard.adjust(1, repeat = True)
         return keyboard.as_markup()
     

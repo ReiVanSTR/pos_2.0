@@ -1,0 +1,8 @@
+2025-10-13 22:15:45 - FileLog - 585708940 - Logging in POS - {}
+2025-10-16 17:21:26 - FileLog - 585708940 - Logging in POS - {}
+2025-10-16 19:28:59 - FileLog - 628515065 - Logging in POS - {}
+2025-10-16 19:30:01 - FileLog - 628515065 - Opened session - {}
+2025-10-16 19:30:07 - FileLog - 628515065 - Logging in POS - {}
+2025-10-16 19:30:12 - FileLog - 628515065 - Logging in POS - {}
+2025-10-16 21:55:57 - FileLog - 585708940 - Logging in POS - {}
+2025-10-16 22:43:58 - FileLog - 628515065 - Closed session - {"date": "2025-10-16T20:43:58.367972+00:00"}

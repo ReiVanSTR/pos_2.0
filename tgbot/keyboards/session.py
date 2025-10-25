@@ -17,7 +17,7 @@ class SessionKeyboards(BasicPageGenerator):
     def open_session():
         keyboard = InlineKeyboardBuilder()
         keyboard.button(
-            text = "Open session",
+            text = "Rozpocznij sprzedaż",
             callback_data = SessionNavigateCallback(action = ButtonActions.OPEN_SESSION.value)
         )
         keyboard.button(
@@ -34,22 +34,22 @@ class SessionKeyboards(BasicPageGenerator):
             session_statistics = {}
 
         keyboard.button(
-            text = f"Session active: {get_timedelta(session_data.start_time)}",
+            text = f"Czas pracy: {get_timedelta(session_data.start_time)}",
             callback_data = SessionNavigateCallback(action = ButtonActions.STATIC.value)
         )
 
         keyboard.button(
-            text = f"Orders count: {session_statistics.get('total_order', 0)} | Total: {session_statistics.get('total_cost', 0)} pln",
+            text = f"Zamowień: {session_statistics.get('total_order', 0)} | Total: {session_statistics.get('total_cost', 0)} pln",
             callback_data = SessionNavigateCallback(action = ButtonActions.STATIC.value)
         )
 
         keyboard.button(
-            text = "Last activities",
+            text = "Ostatnie aktywności",
             callback_data = SessionNavigateCallback(action = ButtonActions.ACTIVITIES.value)
         )
 
         keyboard.button(
-            text = "Close session",
+            text = "Zakończ sprzedaż",
             callback_data = SessionNavigateCallback(action = ButtonActions.CLOSE_SESSION.value)
         )
 
@@ -98,7 +98,7 @@ class SessionKeyboards(BasicPageGenerator):
         
         markup = await self.session_activities(current_page = current_page)
 
-        await query.message.edit_text(text = "Session activities: ", reply_markup = markup)
+        await query.message.edit_text(text = "Aktywności sprzedaży: ", reply_markup = markup)
 
 
     async def session_open_bill(self, bill_id: str):
@@ -106,7 +106,7 @@ class SessionKeyboards(BasicPageGenerator):
         user: UserData = await User.get_user_by_user_id(bill.created_by)
 
         keyboard = InlineKeyboardBuilder()
-        keyboard.button(text = f"{bill.bill_name} | {user.username} | Created {get_timedelta(bill.timestamp)} ago",
+        keyboard.button(text = f"{bill.bill_name} | {user.username} | Utworzono {get_timedelta(bill.timestamp)} temu",
                         callback_data = SessionNavigateCallback(action = ButtonActions.STATIC.value)
         )
         if bill.orders:
@@ -115,13 +115,13 @@ class SessionKeyboards(BasicPageGenerator):
                 keyboard.button(text = f"{result.order_name} | {result.cost} pln",
                         callback_data = SessionNavigateCallback(action = ButtonActions.OPEN_ORDER.value, order_id = result._id.__str__()))
         else:
-            keyboard.button(text = "(No orders)",
+            keyboard.button(text = "(Brak zamówień)",
                         callback_data = SessionNavigateCallback(action = ButtonActions.STATIC.value))
 
         keyboard.adjust(1, repeat = True)
         
         operation_keyboard = InlineKeyboardBuilder()
-        operation_keyboard.button(text = "Open bill",
+        operation_keyboard.button(text = "Otwórz rachunek",
                         callback_data = SessionNavigateCallback(action = ButtonActions.OPEN_BILL.value, bill_id = bill._id.__str__(), permissions = Permissions.SESSION_OPEN_BILL.value))
         
         operation_keyboard.button(text = f"{bill.payment_method}",
@@ -144,11 +144,11 @@ class SessionKeyboards(BasicPageGenerator):
         order = await Order.get_order(order_id = order_id)
         user = await User.get_user_by_user_id(order.created_by)
         keyboard.button(
-            text = f"{order.order_name} | Created: {get_timedelta(order.timestamp)} ago ", 
+            text = f"{order.order_name} | Utworzono: {get_timedelta(order.timestamp)} temu ", 
             callback_data=SessionNavigateCallback(action = ButtonActions.STATIC.value)
         )
         keyboard.button(
-            text = f"Created by: {user.username} | {user.post.name}", 
+            text = f"Przez: {user.username} | {user.post.name}", 
             callback_data=SessionNavigateCallback(action = ButtonActions.STATIC.value)
 
         )
@@ -180,17 +180,17 @@ class SessionKeyboards(BasicPageGenerator):
             session_statistics = {}
 
         keyboard.button(
-            text = f"Session active: {get_timedelta(session_data.start_time)}",
+            text = f"Czas pracy: {get_timedelta(session_data.start_time)}",
             callback_data = SessionNavigateCallback(action = ButtonActions.STATIC.value)
         )
 
         keyboard.button(
-            text = f"Orders count: {session_statistics.get('total_order', 0)} | Total: {session_statistics.get('total_cost', 0)} pln",
+            text = f"Ilość zamówień: {session_statistics.get('total_order', 0)} | Total: {session_statistics.get('total_cost', 0)} pln",
             callback_data = SessionNavigateCallback(action = ButtonActions.STATIC.value)
         )
 
         keyboard.button(
-            text = "Commit close!",
+            text = "Zatwierdź zakończenie sprzedaży!",
             callback_data = SessionNavigateCallback(action = ButtonActions.CLOSE_SESSION_COMMIT.value)
         )
 
