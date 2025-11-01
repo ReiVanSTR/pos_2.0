@@ -1,4 +1,5 @@
 import calendar
+import logging
 from datetime import datetime, timedelta
 from typing import List
 
@@ -12,6 +13,7 @@ from .callbacks import ReportNavigateCallback, CalendarCallback
 from ..enums.keyboards.reports_keyboard import ReportsButtonActions
 from ..enums.keyboards.calendar import CalendarActions
 from ..models import Session, User, UserData
+from ..models.session import SessionReportData
 from ..misc.history_manager import Manager
 from ..misc.calendar import MONTH_EN_PL
 
@@ -69,7 +71,7 @@ class ReportsKeyboards(BasicPageGenerator):
     async def show_report(self, report_id: int):
         keyboard = InlineKeyboardBuilder()
 
-        session = await Session.generate_report_data(session_id = report_id)
+        session: SessionReportData = await Session.generate_report_data(session_id = report_id)
         keyboard.button(text = f"{session.session_data.opened_by.timestamp.date().strftime('%Y-%m-%d')} | Czas pracy {session.session_data.session_active_time.hours}g {session.session_data.session_active_time.minutes}min", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
         keyboard.button(text = f"Otwarty przez: {session.session_data.opened_by.user_data.username}", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
         keyboard.button(text = f"Zamknięty przez: {session.session_data.closed_by.user_data.username}", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
@@ -83,6 +85,9 @@ class ReportsKeyboards(BasicPageGenerator):
 
 
         keyboard.button(text = "Wygeneruj raport", callback_data = self._navigate_callback(action = ReportsButtonActions.GENERATE_REPORT.value, report_id=report_id))
+        for shift in session.shifts:
+            if not shift.is_counted:
+                keyboard.button(text = f"{shift.username} | -Rozlicz-", callback_data = self._navigate_callback(action = ReportsButtonActions.PAY_SHIFT.value, report_id=shift.shift_id.__str__()))
         keyboard.adjust(1)
 
         back_button = InlineKeyboardBuilder()

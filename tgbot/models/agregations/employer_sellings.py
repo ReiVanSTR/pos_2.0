@@ -14,6 +14,9 @@ def get_employer_sellings(user_id, from_date, to_date):
             }
             }, {
             '$group': {
+                'id': {
+                    '$first': '$_id'
+                },
                 '_id': {
                     '$dateToString': {
                         'format': '%Y-%m-%d', 
@@ -34,6 +37,9 @@ def get_employer_sellings(user_id, from_date, to_date):
                 }, 
                 'end_time': {
                     '$first': '$end_time'
+                },
+                'is_counted': {
+                    '$first': '$is_counted'
                 }
             }
         }, {
@@ -120,9 +126,13 @@ def get_employer_sellings(user_id, from_date, to_date):
                 }, 
                 'total_minutes': {
                     '$sum': '$minutes'
-                }, 
+                },
+                'is_counted': {
+                    '$first': '$is_counted'
+                },
                 'shifts': {
                     '$push': {
+                        '_id': '$id',
                         'date': '$_id', 
                         'start_time': '$start_time', 
                         'end_time': '$end_time', 
@@ -130,7 +140,8 @@ def get_employer_sellings(user_id, from_date, to_date):
                         'minutes': '$minutes', 
                         'sellings': {
                             '$first': '$orders.sellings'
-                        }
+                        },
+                        'is_counted': "$is_counted"
                     }
                 }
             }
@@ -171,7 +182,7 @@ def get_employer_sellings(user_id, from_date, to_date):
                 'total_minutes': 1, 
                 'total_sellings': {
                     '$sum': '$shifts.sellings'
-                }
+                },
             }
         }
     ]

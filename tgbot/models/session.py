@@ -9,7 +9,7 @@ from .agregations.count_session_total import get_total
 from .agregations.test import bill_pipeline
 from .agregations.get_session_by_date import get_pipeline
 from .agregations.session_report import report_aggregation, total_report_aggregation
-from datetime import timedelta
+from datetime import timedelta, timezone
 from ..services.reports.session_dataclasses import SessionReportData
 
 @dataclass
@@ -195,8 +195,9 @@ class Session(Basic):
         return None
 
     @classmethod
-    async def generate_report_data(cls, session_id):
-        pipeline = report_aggregation(session_id)
+    async def generate_report_data(cls, session_id, session_start_time = None, session_end_time = None):
+        _session = await cls._collection.find_one({"_id":ObjectId(session_id)})
+        pipeline = report_aggregation(session_id = session_id, session_start_time = _session["start_time"].astimezone(timezone.utc), session_end_time = _session["end_time"].astimezone(timezone.utc) + timedelta(days=1))
         result = cls._collection.aggregate(pipeline)
 
         if result:

@@ -2,7 +2,7 @@ from ..basic import ObjectId
 from typing import Union
 from datetime import datetime, timezone
 
-def report_aggregation(session_id: Union[str, ObjectId]):
+def report_aggregation(session_id: Union[str, ObjectId], session_start_time: datetime = None, session_end_time: datetime = None):
     if isinstance(session_id, str):
         session_id = ObjectId(session_id)
 
@@ -296,8 +296,8 @@ def report_aggregation(session_id: Union[str, ObjectId]):
                         '$lookup': {
                             'from': 'shifts', 
                             'let': {
-                                'session_start_time': '$start_time', 
-                                'session_end_time': '$end_time'
+                                'session_start_time': session_start_time, 
+                                'session_end_time': session_end_time
                             }, 
                             'pipeline': [
                                 {
@@ -327,10 +327,16 @@ def report_aggregation(session_id: Union[str, ObjectId]):
                                     '$group': {
                                         '_id': {
                                             '$first': '$user_data.username'
-                                        }, 
-                                        'work_time': {
-                                            '$push': '$$ROOT'
-                                        }, 
+                                        },
+                                        'user_id': {
+                                            '$first': '$user_data.user_id'
+                                        },
+                                        'shift_id': {
+                                            '$first': '$$ROOT._id'
+                                        },
+                                        'is_counted': {
+                                            '$first': '$$ROOT.is_counted'
+                                        },
                                         'total_hours': {
                                             '$sum': '$work_time.hours'
                                         }, 

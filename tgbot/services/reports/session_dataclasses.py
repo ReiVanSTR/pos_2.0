@@ -106,11 +106,17 @@ class Shift:
     username: str
     total_hours: int
     total_minutes: int
+    user_id: int
+    shift_id: ObjectId
+    is_counted: bool
 
-    def __init__(self, _id, work_time, total_hours, total_minutes) -> None:
+    def __init__(self, _id, user_id, total_hours, total_minutes, shift_id, is_counted) -> None:
         self.username = _id
+        self.user_id = user_id[0]
+        self.shift_id = shift_id
         self.total_hours = total_hours
         self.total_minutes = total_minutes
+        self.is_counted = is_counted
 
 @dataclass(init = False)
 class SessionReportData:

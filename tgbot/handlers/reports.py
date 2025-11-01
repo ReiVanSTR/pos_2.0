@@ -1,6 +1,6 @@
 import random
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Union
 from aiogram.fsm.context import FSMContext
 
@@ -10,7 +10,7 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 
 from .markup import onState, Markups, StateKeyboard
 
-from ..models import UserData, Session, User, UserData
+from ..models import UserData, Session, User, UserData, Shift
 from ..keyboards.menu import MenuKeyboards
 from ..keyboards.reports import ReportsKeyboards
 from ..keyboards.callbacks import MenuNavigateCallback, ReportNavigateCallback, CalendarCallback
@@ -55,7 +55,7 @@ async def view_reports_menu(query: CallbackQuery, Manager: Manager, user: UserDa
     await query.answer()
     await Manager.push(ReportsStates.view_reports.state, {"current_page":1})
 
-    sessions_by_date = Session._collection.aggregate(get_pipeline(datetime.fromisoformat("2025-01-01"), datetime.now()))
+    sessions_by_date = Session._collection.aggregate(get_pipeline(datetime.fromisoformat("2025-01-01"), datetime.now() + timedelta(days=1)))
     keyboards.update(data = [session async for session in sessions_by_date])
 
     await query.message.edit_text("View daily reports:", reply_markup= await keyboards.view_dayly_reports(current_page = 1))
@@ -67,6 +67,14 @@ async def show_report(query: CallbackQuery, callback_data: ReportNavigateCallbac
 
 
     await query.message.edit_text(f"Report details for report id: {callback_data.report_id}", reply_markup= await keyboards.show_report(callback_data.report_id))
+
+@reports_router.callback_query(StateFilter(ReportsStates.show_report), ReportNavigateCallback.filter(F.action == ReportsButtonActions.PAY_SHIFT.value))
+async def pay_shift(query: CallbackQuery, callback_data: ReportNavigateCallback, Manager: Manager):
+    await query.answer()
+    session_id = await Manager.get_data(key = "report_id")
+    await Shift.mark_shift_as_counted(callback_data.report_id)
+    await query.message.answer("Zmiana została rozliczona.")
+    await query.message.edit_text(f"Report details for report id: {session_id}", reply_markup= await keyboards.show_report(session_id))
 
 @reports_router.callback_query(StateFilter(ReportsStates.show_report), ReportNavigateCallback.filter(F.action == ReportsButtonActions.GENERATE_REPORT.value))
 async def generate_report(query: CallbackQuery, callback_data: ReportNavigateCallback, Manager: Manager):

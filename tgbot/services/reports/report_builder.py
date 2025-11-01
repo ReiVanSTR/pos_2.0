@@ -2,16 +2,16 @@ from docx import Document
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
-from tgbot.models import ObjectId, Session
+from tgbot.models import ObjectId, Session, User
 from tgbot.models import Shift as ShiftModel
 from .session_dataclasses import SessionReportData, EmployerSellings, Shift, SessionData
 
 from enum import Enum
 from typing import Union
-from datetime import datetime
-from pytz import timezone
+from datetime import datetime, timedelta, timezone
+from pytz import timezone as tzone
 
-tzinfo = timezone("Europe/Warsaw")
+tzinfo = tzone("Europe/Warsaw")
 
 class DocumentBuilder():
     path: str
@@ -110,8 +110,8 @@ class DocumentBuilder():
         """)
         
     def add_employer_sellings_table(self, sellings_data, shift_cost: int = 150, hour_price: int = 22, count_by_hours: bool = False, comment: str = None, selling_reward: int = 5):
-        table = self.document.add_table(rows = 1, cols = 7)
-        header_cells_names = ["Data", "Początek Zmiany", "Koniec Zmiany", "Godziny", "Minuty", "Sprzedaż", "Premia od sprzedaży"]
+        table = self.document.add_table(rows = 1, cols = 8)
+        header_cells_names = ["Data", "Początek Zmiany", "Koniec Zmiany", "Godziny", "Minuty", "Sprzedaż", "Premia od sprzedaży", "Rozliczone"]
         for cell in range(len(table.rows[0].cells)):
             table.rows[0].cells[cell].text = header_cells_names[cell]
         
@@ -141,6 +141,7 @@ class DocumentBuilder():
             row_cells[4].text = str(selling.get("minutes"))
             row_cells[5].text = str(selling.get("sellings", 0))
             row_cells[6].text = str(prem)
+            row_cells[7].text = "Tak" if selling.get("is_counted", False) else "Nie"
             
         paragraf = self.document.add_paragraph()
         paragraf.add_run("\n")
@@ -149,12 +150,12 @@ class DocumentBuilder():
 
         shift_part = f"""
                 Premia za zmianę: {shift_cost} PLN
-                Łączna premia zmianowa: {len(sellings_data.get("shifts")) * 150}
+                Łączna premia zmianowa: {len(sellings_data.get("shifts")) * 150 + total_prem} PLN
         """
 
         hours_part = f"""
                 Stawka godzinowa: {hour_price}
-                Łączna wypłata: {round((sellings_data.get("total_hours") + sellings_data.get("total_minutes")/60) * hour_price, 2)}
+                Łączna wypłata: {round((sellings_data.get("total_hours") + sellings_data.get("total_minutes")/60) * hour_price, 2) + total_prem} PLN
         """
 
         paragraf.add_run(text = f"""
@@ -190,7 +191,8 @@ class Report():
         self.default_route = "./reports" if not route else route
 
     async def generate_change_report(self, session_id: Union[ObjectId, str], user_name: str, filename: str = None, session_data = None):
-        _session_data: SessionReportData = await Session.generate_report_data(session_id = session_id) if not session_data else session_data
+        _session = await Session._collection.find_one({"_id":ObjectId(session_id)})
+        _session_data: SessionReportData = await Session.generate_report_data(session_id = session_id, session_start_time = _session["start_time"].astimezone(timezone.utc), session_end_time = _session["end_time"].astimezone(timezone.utc))
         _generating_date = datetime.now(tz=tzinfo).strftime("%d-%m-%Y %H:%M") 
 
         self.builder.add_title(f"Raport zmianowy nr {_session_data.session_data.session_id.__str__()[8:15]}")
@@ -200,9 +202,20 @@ class Report():
 
         for employer_data in _session_data.employer_sellings:
             shift = _session_data.find_shift(employer_data.employer_name)
-
             self.builder.add_employer_entry(employer_data, shift)
+
+            _employer_sellings = await ShiftModel.generate_total_report_data(628515065, _session["start_time"].astimezone(timezone.utc), _session["end_time"].astimezone(timezone.utc) + timedelta(days=1))
+            _employer = await User.get_user_by_user_id(_employer_sellings[0].get("_id"))
+            self.builder.add_employer_sellings_table(
+                _employer_sellings[0],
+                shift_cost=_employer.shift_cost,
+                hour_price=_employer.hour_price,
+                selling_reward=_employer.selling_reward,
+                count_by_hours=True
+            )
             self.builder.document.add_page_break()
+
+
         self.builder.add_session_tabacco_data(_session_data)
         self.builder.add_sesion_total_entry(_session_data)
 

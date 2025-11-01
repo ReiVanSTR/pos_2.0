@@ -12,6 +12,7 @@ class ReportsButtonActions(str, Enum):
     STATIC = "static"
     EMPLOYEES_REPORTS = "employees_reports"
     SELECT_EMPLOYEE = "select_employee"
+    PAY_SHIFT = "pay_shift"
     
 
 

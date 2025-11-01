@@ -17,6 +17,7 @@ class ShiftData():
     end_time: datetime
     user_id: int
     work_time: datetime = None
+    is_counted: bool = False
 
 
 class Shift(Basic):
@@ -25,6 +26,7 @@ class Shift(Basic):
     end_time: datetime = Field(default = None)
     work_time: datetime 
     user_id: int
+    is_counted: bool = Field(default = False)
 
     @classmethod
     async def is_exists(cls, user_id: int) -> bool:
@@ -44,6 +46,7 @@ class Shift(Basic):
             "start_time": datetime.now(pytz.utc),
             "end_time": None,
             "work_time":None,
+            "is_counted": False,
         }
 
         inserted_id = await cls._collection.insert_one(document)
@@ -153,6 +156,7 @@ class Shift(Basic):
             "start_time": start_time,
             "end_time": end_time,
             "work_time":work_time,
+            "is_counted": False,
         }
 
         inserted_id = await cls._collection.insert_one(document)
@@ -172,6 +176,21 @@ class Shift(Basic):
             return employer_data
 
         return None
+
+    @classmethod
+    async def mark_shift_as_counted(cls, shift_id):
+        try:
+            if isinstance(shift_id, str):
+                shift_id = ObjectId(shift_id)
+            await cls._collection.update_one(
+                {"_id":shift_id},
+                {"$set":{"is_counted": True}}
+            )
+
+            return True
+
+        except Exception as e:
+            return str(e)
 
 
 Shift.set_collection("shifts")
