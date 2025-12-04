@@ -197,7 +197,7 @@ class Session(Basic):
     @classmethod
     async def generate_report_data(cls, session_id, session_start_time = None, session_end_time = None):
         _session = await cls._collection.find_one({"_id":ObjectId(session_id)})
-        pipeline = report_aggregation(session_id = session_id, session_start_time = _session["start_time"].astimezone(timezone.utc), session_end_time = _session["end_time"].astimezone(timezone.utc) + timedelta(days=1))
+        pipeline = report_aggregation(session_id = session_id, session_start_time = _session["start_time"].astimezone(timezone.utc) - timedelta(hours=8), session_end_time = _session["end_time"].astimezone(timezone.utc)+timedelta(hours=8))
         result = cls._collection.aggregate(pipeline)
 
         if result:

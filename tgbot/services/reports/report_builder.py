@@ -116,6 +116,9 @@ class DocumentBuilder():
             table.rows[0].cells[cell].text = header_cells_names[cell]
         
         total_prem = 0
+        to_pay_prem = 0
+        hours_to_pay = 0
+        minutes_to_pay = 0
         
         for selling in sellings_data.get("shifts"):
             sell_min = 10
@@ -124,6 +127,7 @@ class DocumentBuilder():
             if datetime.fromisoformat(selling.get("date")).weekday() in (4,5):
                 sell_min = 15
 
+            
             if selling.get("sellings", 0) >= sell_min:
                 if selling_reward * 2 > 10:
                     prem = selling.get("sellings", 0) * 10
@@ -131,8 +135,14 @@ class DocumentBuilder():
                     prem = selling.get("sellings", 0) * (selling_reward * 2)
             else:
                 prem = selling.get("sellings", 0) * selling_reward
-                
+            
             total_prem += prem
+
+            if not selling.get("is_counted", False):
+                to_pay_prem += prem
+                hours_to_pay += selling.get("hours", 0)
+                minutes_to_pay += selling.get("minutes", 0)
+
             row_cells = table.add_row().cells
             row_cells[0].text = selling.get("date")
             row_cells[1].text = selling.get("start_time").strftime("%d-%m-%Y %H:%M")
@@ -156,7 +166,12 @@ class DocumentBuilder():
         hours_part = f"""
                 Stawka godzinowa: {hour_price}
                 Łączna wypłata: {round((sellings_data.get("total_hours") + sellings_data.get("total_minutes")/60) * hour_price, 2) + total_prem} PLN
-        """
+
+                Pozostało do rozliczenia: 
+                    - Premii od sprzedaży: {to_pay_prem} PLN
+                    - Godziny: {round((hours_to_pay + minutes_to_pay/60) * hour_price, 2)} PLN
+                    - Razem: {round((hours_to_pay + minutes_to_pay/60) * hour_price, 2) + to_pay_prem} PLN
+        """ 
 
         paragraf.add_run(text = f"""
                         Godziny: {sellings_data.get("total_hours")}
@@ -164,8 +179,8 @@ class DocumentBuilder():
                         Ilość zmian: {len(sellings_data.get("shifts"))}
                         Rozliczenie według godzin: {count_by_hours}
                             {hours_part if count_by_hours else shift_part}
-                        Premia od sprzedaży: {total_prem}
-                        Comment: {comment}
+                    Premia od sprzedaży: {total_prem}
+                    Comment: {comment}
         """)
         
         
@@ -192,7 +207,7 @@ class Report():
 
     async def generate_change_report(self, session_id: Union[ObjectId, str], user_name: str, filename: str = None, session_data = None):
         _session = await Session._collection.find_one({"_id":ObjectId(session_id)})
-        _session_data: SessionReportData = await Session.generate_report_data(session_id = session_id, session_start_time = _session["start_time"].astimezone(timezone.utc), session_end_time = _session["end_time"].astimezone(timezone.utc))
+        _session_data: SessionReportData = await Session.generate_report_data(session_id = session_id)
         _generating_date = datetime.now(tz=tzinfo).strftime("%d-%m-%Y %H:%M") 
 
         self.builder.add_title(f"Raport zmianowy nr {_session_data.session_data.session_id.__str__()[8:15]}")
@@ -204,8 +219,8 @@ class Report():
             shift = _session_data.find_shift(employer_data.employer_name)
             self.builder.add_employer_entry(employer_data, shift)
 
-            _employer_sellings = await ShiftModel.generate_total_report_data(628515065, _session["start_time"].astimezone(timezone.utc), _session["end_time"].astimezone(timezone.utc) + timedelta(days=1))
-            _employer = await User.get_user_by_user_id(_employer_sellings[0].get("_id"))
+            _employer_sellings = await ShiftModel.generate_total_report_data(employer_data.employer_id, _session["start_time"].astimezone(timezone.utc) - timedelta(hours=8), _session["end_time"].astimezone(timezone.utc)+timedelta(hours=8))
+            _employer = await User.get_user_by_user_id(employer_data.employer_id)
             self.builder.add_employer_sellings_table(
                 _employer_sellings[0],
                 shift_cost=_employer.shift_cost,
@@ -272,7 +287,18 @@ class Report():
         for employer_data in _session_data.employer_sellings:
             shift = _session_data.find_shift(employer_data.employer_name)
             self.builder.add_employer_entry(employer_data, shift)
+
+            _employer_sellings = await ShiftModel.generate_total_report_data(employer_data.employer_id, from_date.astimezone(timezone.utc), to_date.astimezone(timezone.utc) + timedelta(days=1))
+            _employer = await User.get_user_by_user_id(employer_data.employer_id)
+            self.builder.add_employer_sellings_table(
+                _employer_sellings[0],
+                shift_cost=_employer.shift_cost,
+                hour_price=_employer.hour_price,
+                selling_reward=_employer.selling_reward,
+                count_by_hours=True
+            )
             self.builder.document.add_page_break()
+
 
         self.builder.add_session_tabacco_data(_session_data)
         self.builder.add_sesion_total_entry(_session_data)

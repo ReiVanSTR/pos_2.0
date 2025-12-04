@@ -48,6 +48,7 @@ class BillShortData:
 @dataclass(init = False)
 class EmployerSellings:
     employer_name: str 
+    employer_id: int
     bills: List[Dict]
     bills_by_card: List[BillShortData]
     card_total: int
@@ -61,6 +62,7 @@ class EmployerSellings:
     def __init__(
             self,
             _id,
+            user_id,
             bills,
             bills_by_card,
             card_total,
@@ -72,6 +74,7 @@ class EmployerSellings:
             total_orders
         ) -> None:
         self.employer_name = _id
+        self.employer_id = user_id[0]
         self.bills = bills
         self.bills_by_card = []
         self.card_total = card_total
@@ -109,14 +112,17 @@ class Shift:
     user_id: int
     shift_id: ObjectId
     is_counted: bool
+    work_time: Dict[str, int]
 
-    def __init__(self, _id, user_id, total_hours, total_minutes, shift_id, is_counted) -> None:
+
+    def __init__(self, _id, user_id, total_hours, total_minutes, shift_id, is_counted, work_time = None) -> None:
         self.username = _id
         self.user_id = user_id[0]
         self.shift_id = shift_id
         self.total_hours = total_hours
         self.total_minutes = total_minutes
         self.is_counted = is_counted
+        self.work_time = work_time 
 
 @dataclass(init = False)
 class SessionReportData:
@@ -150,4 +156,7 @@ class SessionReportData:
 
     def find_shift(self, username: str):
         for shift in self.shifts:
-            return shift if shift.username == username else None
+            if shift.username == username:
+                return shift
+            
+        return None

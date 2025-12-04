@@ -83,12 +83,16 @@ class ReportsKeyboards(BasicPageGenerator):
         # keyboard.button(text = f"{session.session_data.opened_by}", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
         # keyboard.button(text = f"{session.session_data.opened_by}", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
 
+        keyboard.button(text = "-- Pracownicy --", callback_data = self._navigate_callback(action = ReportsButtonActions.STATIC.value))
+
+
+        for pos, shift in enumerate(session.shifts):
+            keyboard.button(text = f" {pos+1}. {shift.username}: {'Rozliczony' if shift.is_counted else 'Rozlicz'}", callback_data = self._navigate_callback(action = ReportsButtonActions.PAY_SHIFT.value, report_id=shift.shift_id.__str__()))
+        
 
         keyboard.button(text = "Wygeneruj raport", callback_data = self._navigate_callback(action = ReportsButtonActions.GENERATE_REPORT.value, report_id=report_id))
-        for shift in session.shifts:
-            if not shift.is_counted:
-                keyboard.button(text = f"{shift.username} | -Rozlicz-", callback_data = self._navigate_callback(action = ReportsButtonActions.PAY_SHIFT.value, report_id=shift.shift_id.__str__()))
-        keyboard.adjust(1)
+        keyboard.adjust(1, repeat = True)
+
 
         back_button = InlineKeyboardBuilder()
         back_button.button(text = "<< Powrót <<", callback_data = ReportNavigateCallback(action = ReportsButtonActions.BACK.value))

@@ -93,7 +93,10 @@ def report_aggregation(session_id: Union[str, ObjectId], session_start_time: dat
                     '$group': {
                         '_id': {
                             '$first': '$bill_data.created_by.username'
-                        }, 
+                        },
+                        'user_id': {
+                            '$first': '$bill_data.created_by.user_id'
+                        },
                         'bills': {
                             '$push': {
                                 'bill_data': '$bill_data', 
@@ -475,7 +478,10 @@ def total_report_aggregation(from_date, to_date):
                     '$group': {
                         '_id': {
                             '$first': '$bill_data.created_by.username'
-                        }, 
+                        },
+                        'user_id': {
+                            '$first': '$bill_data.created_by.user_id'
+                        },
                         'bills': {
                             '$push': {
                                 'bill_data': '$bill_data', 
@@ -678,8 +684,8 @@ def total_report_aggregation(from_date, to_date):
                         '$lookup': {
                             'from': 'shifts', 
                             'let': {
-                                'session_start_time': '$start_time', 
-                                'session_end_time': '$end_time'
+                                'session_start_time': datetime(from_date.year, from_date.month, from_date.day, 0, 0, 0, tzinfo=timezone.utc), 
+                                'session_end_time': datetime(to_date.year, to_date.month, to_date.day, 0, 0, 0, tzinfo=timezone.utc)
                             }, 
                             'pipeline': [
                                 {
@@ -709,10 +715,16 @@ def total_report_aggregation(from_date, to_date):
                                     '$group': {
                                         '_id': {
                                             '$first': '$user_data.username'
-                                        }, 
-                                        'work_time': {
-                                            '$push': '$$ROOT'
-                                        }, 
+                                        },
+                                        'user_id': {
+                                            '$first': '$user_data.user_id'
+                                        },
+                                        'shift_id': {
+                                            '$first': '$$ROOT._id'
+                                        },
+                                        'is_counted': {
+                                            '$first': '$$ROOT.is_counted'
+                                        },
                                         'total_hours': {
                                             '$sum': '$work_time.hours'
                                         }, 
