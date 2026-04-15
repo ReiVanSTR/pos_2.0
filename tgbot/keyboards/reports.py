@@ -114,6 +114,17 @@ class ReportsKeyboards(BasicPageGenerator):
 
         await query.message.edit_text(text = "View daily reports: ", reply_markup = markup)
 
+    async def salary_report_options(self):
+        keyboard = InlineKeyboardBuilder()
+        salary_types = ["Godzinowa", "Dniówka"]
+        keyboard.button(text = "Wybierz typ wynagrodzenia:", callback_data = ReportNavigateCallback(action = ReportsButtonActions.STATIC.value))
+        for salary_type in salary_types:
+            keyboard.button(text = salary_type, callback_data = ReportNavigateCallback(action = ReportsButtonActions.SELECT_SALARY_TYPE.value, salary_type=salary_type.lower()))
+
+        keyboard.button(text = "Powrót", callback_data = ReportNavigateCallback(action = ReportsButtonActions.BACK.value))
+        keyboard.adjust(1, repeat = True)
+        return keyboard.as_markup()
+
     async def inline_calendar(self, year: int = None, month: int = None, selected_range: tuple = None):
         _current_date = datetime.now()
 

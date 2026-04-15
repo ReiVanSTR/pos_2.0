@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class ReportsButtonActions(str, Enum):
+    SELECT_SALARY_TYPE = "select_salary_type"
     BACK = "back"
     PEREODIC_REPORT = "pereodic_report"
     GENERATE_REPORT = "generate_report"

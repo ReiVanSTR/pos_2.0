@@ -136,6 +136,14 @@ async def select_employee_for_report(query: CallbackQuery, callback_data: Report
     await query.answer()
     await Manager.push(ReportsStates.employer_report_calendar.state, {"user_id":callback_data.user_id})
 
+    markup = await keyboards.salary_report_options()
+    await query.message.edit_text(text = "Select salary type: ", reply_markup = markup)
+
+@reports_router.callback_query(StateFilter(ReportsStates.employer_report_calendar), ReportNavigateCallback.filter(F.action == ReportsButtonActions.SELECT_SALARY_TYPE.value))
+async def select_employee_salary_type_for_report(query: CallbackQuery, callback_data: ReportNavigateCallback, Manager: Manager):
+    await query.answer()
+    await Manager.push_data(ReportsStates.employer_report_calendar, {"salary_type":callback_data.salary_type})
+ 
     markup = await keyboards.inline_calendar()
     await query.message.edit_text(text = "Select range for employer report: ", reply_markup = markup)
 
@@ -145,6 +153,14 @@ async def generate_employer_report(query: CallbackQuery, Manager: Manager):
     first_selected = await Manager.get_data(key = "first_selected")
     second_selected = await Manager.get_data(key = "second_selected")
     user_id = await Manager.get_data(key = "user_id")
+    salary_type = await Manager.get_data(key = "salary_type")
+
+    if salary_type == "godzinowa":
+        salary_type = True
+    else:
+        salary_type = False
+
+        
     _user: UserData = await User.get_user_by_user_id(user_id)
 
     try:
@@ -156,7 +172,7 @@ async def generate_employer_report(query: CallbackQuery, Manager: Manager):
             filename = "_buffer",
             shift_cost = _user.shift_cost,
             hour_price = _user.hour_price,
-            count_by_hours = True,
+            count_by_hours = salary_type,
             selling_reward = _user.selling_reward
         )
         image = FSInputFile(

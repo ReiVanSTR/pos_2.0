@@ -1,0 +1,61 @@
+2025-12-06 12:54:16 - FileLog - 628515065 - Logging in POS - {}
+2025-12-06 12:54:20 - FileLog - 628515065 - Opened session - {}
+2025-12-06 12:54:26 - FileLog - 628515065 - Logging in POS - {}
+2025-12-06 12:56:48 - FileLog - 585708940 - Logging in POS - {}
+2025-12-06 13:41:08 - FileLog - 585708940 - Logging in POS - {}
+2025-12-06 13:41:15 - FileLog - 585708940 - Logging in POS - {}
+2025-12-06 13:41:39 - FileLog - 585708940 - Logging in POS - {}
+2025-12-06 14:31:26 - FileLog - 628515065 - Logging in POS - {}
+2025-12-06 16:05:56 - FileLog - 585708940 - Logging in POS - {}
+2025-12-06 16:32:52 - FileLog - 585708940 - Logging in POS - {}
+2025-12-06 16:55:55 - FileLog - 628515065 - Logging in POS - {}
+2025-12-06 16:56:12 - FileLog - 628515065 - Closed session - {"date": "2025-12-06T22:56:11.720601+00:00"}
+2025-12-08 14:31:48 - FileLog - 628515065 - Logging in POS - {}
+2025-12-08 14:31:55 - FileLog - 628515065 - Opened session - {}
+2025-12-08 14:31:59 - FileLog - 628515065 - Logging in POS - {}
+2025-12-08 19:30:43 - FileLog - 628515065 - Closed session - {"date": "2025-12-09T01:30:43.167830+00:00"}
+2025-12-10 09:33:31 - FileLog - 585708940 - Logging in POS - {}
+2025-12-10 09:33:59 - FileLog - 8305059279 - Logging in POS - {}
+2025-12-11 13:05:31 - FileLog - 551958194 - Logging in POS - {}
+2025-12-11 13:05:37 - FileLog - 551958194 - Opened session - {}
+2025-12-11 13:05:43 - FileLog - 551958194 - Logging in POS - {}
+2025-12-11 13:05:47 - FileLog - 551958194 - Logging in POS - {}
+2025-12-11 14:37:57 - FileLog - 551958194 - Logging in POS - {}
+2025-12-11 16:26:31 - FileLog - 628515065 - Logging in POS - {}
+2025-12-11 16:26:35 - FileLog - 628515065 - Logging in POS - {}
+2025-12-11 17:05:29 - FileLog - 551958194 - Logging in POS - {}
+2025-12-11 17:06:05 - FileLog - 551958194 - Logging in POS - {}
+2025-12-11 17:06:13 - FileLog - 551958194 - Closed session - {"date": "2025-12-11T23:06:13.173012+00:00"}
+2025-12-12 12:59:03 - FileLog - 628515065 - Logging in POS - {}
+2025-12-12 13:00:51 - FileLog - 628515065 - Opened session - {}
+2025-12-12 13:00:57 - FileLog - 628515065 - Logging in POS - {}
+2025-12-12 18:29:17 - FileLog - 628515065 - Closed session - {"date": "2025-12-13T00:29:16.258386+00:00"}
+2025-12-13 12:56:50 - FileLog - 628515065 - Logging in POS - {}
+2025-12-13 12:57:01 - FileLog - 628515065 - Opened session - {}
+2025-12-13 12:59:35 - FileLog - 628515065 - Logging in POS - {}
+2025-12-13 16:56:42 - FileLog - 628515065 - Closed session - {"date": "2025-12-13T22:56:41.358280+00:00"}
+2025-12-14 08:24:12 - FileLog - 585708940 - Logging in POS - {}
+2025-12-18 12:55:59 - FileLog - 628515065 - Logging in POS - {}
+2025-12-18 12:56:06 - FileLog - 628515065 - Opened session - {}
+2025-12-18 12:56:11 - FileLog - 628515065 - Logging in POS - {}
+2025-12-18 13:06:06 - FileLog - 628515065 - Logging in POS - {}
+2025-12-18 17:34:23 - FileLog - 628515065 - Closed session - {"date": "2025-12-18T23:34:22.551463+00:00"}
+2025-12-19 07:28:56 - FileLog - 585708940 - Logging in POS - {}
+2025-12-19 07:28:56 - FileLog - 585708940 - Logging in POS - {}
+2025-12-19 07:28:56 - FileLog - 585708940 - Logging in POS - {}
+2025-12-19 07:28:56 - FileLog - 585708940 - Logging in POS - {}
+2025-12-19 07:28:56 - FileLog - 585708940 - Logging in POS - {}
+2025-12-19 07:28:56 - FileLog - 585708940 - Logging in POS - {}
+2025-12-19 07:29:01 - FileLog - 585708940 - Logging in POS - {}
+2025-12-19 12:57:25 - FileLog - 628515065 - Logging in POS - {}
+2025-12-19 12:57:28 - FileLog - 628515065 - Opened session - {}
+2025-12-19 12:57:33 - FileLog - 628515065 - Logging in POS - {}
+2025-12-19 16:22:57 - FileLog - 628515065 - Logging in POS - {}
+2025-12-19 16:23:11 - FileLog - 628515065 - Closed session - {"date": "2025-12-19T22:23:10.584789+00:00"}
+2025-12-20 10:47:45 - FileLog - 585708940 - Logging in POS - {}
+2025-12-20 13:06:51 - FileLog - 551958194 - Logging in POS - {}
+2025-12-20 13:06:55 - FileLog - 551958194 - Opened session - {}
+2025-12-20 13:07:02 - FileLog - 551958194 - Logging in POS - {}
+2025-12-20 13:07:05 - FileLog - 551958194 - Logging in POS - {}
+2025-12-20 14:35:34 - FileLog - 551958194 - Logging in POS - {}
+2025-12-20 17:02:16 - FileLog - 551958194 - Closed session - {"date": "2025-12-20T23:02:15.939309+00:00"}

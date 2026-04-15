@@ -72,6 +72,7 @@ class ReportNavigateCallback(CallbackData, prefix = "report"):
     report_id: Optional[str] = None
     user_id: Optional[int] = None
     permissions: Optional[str] = None
+    salary_type: Optional[str] = None
 
 class CalendarCallback(CallbackData, prefix = "calendar"):
     action: str

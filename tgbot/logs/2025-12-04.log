@@ -1,0 +1,19 @@
+2025-12-04 11:59:09 - FileLog - 585708940 - Logging in POS - {}
+2025-12-04 14:13:00 - FileLog - 628515065 - Logging in POS - {}
+2025-12-04 14:13:00 - FileLog - 628515065 - Logging in POS - {}
+2025-12-04 14:13:00 - FileLog - 628515065 - Logging in POS - {}
+2025-12-04 14:13:00 - FileLog - 628515065 - Logging in POS - {}
+2025-12-04 14:13:00 - FileLog - 628515065 - Logging in POS - {}
+2025-12-04 14:13:00 - FileLog - 628515065 - Logging in POS - {}
+2025-12-04 14:57:53 - FileLog - 628515065 - Opened session - {}
+2025-12-04 14:57:58 - FileLog - 628515065 - Logging in POS - {}
+2025-12-04 17:37:17 - FileLog - 585708940 - Logging in POS - {}
+2025-12-04 17:37:56 - FileLog - 585708940 - Logging in POS - {}
+2025-12-04 17:41:00 - FileLog - 585708940 - Logging in POS - {}
+2025-12-04 17:41:07 - FileLog - 585708940 - Logging in POS - {}
+2025-12-04 18:09:48 - FileLog - 628515065 - Closed session - {"date": "2025-12-05T00:09:47.451434+00:00"}
+2025-12-05 12:58:05 - FileLog - 628515065 - Logging in POS - {}
+2025-12-05 12:58:09 - FileLog - 628515065 - Opened session - {}
+2025-12-05 12:58:13 - FileLog - 628515065 - Logging in POS - {}
+2025-12-05 17:34:30 - FileLog - 628515065 - Closed session - {"date": "2025-12-05T23:34:29.560527+00:00"}
+2025-12-05 18:27:57 - FileLog - 585708940 - Logging in POS - {}

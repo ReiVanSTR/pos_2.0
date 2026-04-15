@@ -179,7 +179,7 @@ def storage_invent_menu():
     keyboard = InlineKeyboardBuilder()
 
     #in config
-    invent_menu_buttons = ["Pojedyncza", "Pełna", "Korekta"]
+    invent_menu_buttons = ["Single", "Pełna", "Korekta"]
 
     for button in invent_menu_buttons:
         keyboard.button(text = button, callback_data = StorageNavigate(action = button.lower()))
