@@ -44,8 +44,10 @@ def tabacco_group():
 def users_all():
     click.secho(""" Ż """)
 
-
-
+@users_group.command("grand_access")
+@click.option(
+    "--user_id", prompt = True, type = int
+)
 @reports_group.command("periodic_report")
 @click.option(
     "--from_date", prompt = "From date [yyyy-mm-dd]", type = str

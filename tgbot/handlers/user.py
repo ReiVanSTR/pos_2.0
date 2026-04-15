@@ -7,7 +7,7 @@ from datetime import datetime
 import random
 
 
-from ..models import UserData, Session, Bills, Shift, User
+from ..models import UserData, Session, Bills, Shift, User, Permissions
 from ..keyboards.menu import MenuKeyboards
 from ..keyboards.callbacks import MenuNavigateCallback
 from ..misc.history_manager import Manager
@@ -114,6 +114,15 @@ async def open_session_by_day(message: Message, user, cache, Manager, logger):
     except:
         await message.answer("Input correctly date in format: '2000-01-01'")
 
+@menu_router.message(Command("grand_permissions"))
+async def grand_permissions(message: Message):
+    try:
+        user = message.text.split(" ")[1]
+        username = message.text.split(" ")[2]
+        await User.create_user(user_id = int(user), username = username, post = 2, shift_cost = 150, hour_price = 22, selling_reward = 5)
+        await User.grand_permission(user_id = int(user), permission = Permissions.OPEN_SESSION)
+    except:
+        await message.answer("Input correctly user id")
 
 @menu_router.message(Command("generate_report"), )
 async def generate_session_report(message: Message, user, cache, Manager, logger):
